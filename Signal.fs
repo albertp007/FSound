@@ -19,7 +19,8 @@ module Signal =
     let dftComponent k s =
       let N = Seq.length s
       let w = 2.0*System.Math.PI*(float k)/(float N)
-      let re = foldi (fun acc i x-> acc + x*cos(w*(float i))) 0.0 s
-      let im = foldi (fun acc i x-> acc + x*sin(w*(float i))) 0.0 s
-      (re, im)
+      foldi (fun (re,im) i x-> (re + x*cos(w*(float i)), 
+                                im + x*sin(w*(float i)))) 
+                                (0.0, 0.0) s
+    
     Seq.mapi (fun i _ -> dftComponent i samples) samples
