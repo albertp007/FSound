@@ -2,7 +2,10 @@
 
 module IO =
 
-  type SoundFile (samplingRate: float, numChannels: int, data: seq<byte>, isPCM: bool) =
+  type SoundFile (samplingRate: float, 
+                  numChannels: int, 
+                  data: seq<byte>, 
+                  isPCM: bool) =
     member f.SamplingRate = samplingRate
     member f.Data = data
     member f.IsPCM = isPCM
