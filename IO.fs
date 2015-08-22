@@ -27,8 +27,8 @@ module IO =
       reader.ReadBytes(12) |> ignore
 
       let sizeChunk1 = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)
-      let audioFormat = System.BitConverter.ToInt16(reader.ReadBytes(2), 0)
-      let numChannels = System.BitConverter.ToInt16(reader.ReadBytes(2), 0)
+      let audioFormat = int(System.BitConverter.ToInt16(reader.ReadBytes(2), 0))
+      let numChannels = int(System.BitConverter.ToInt16(reader.ReadBytes(2), 0))
       let samplingRate = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)
 
       // ignore rest of chunk 1
@@ -44,8 +44,11 @@ module IO =
       if idChunk2 <> "data"B then
         failwith "Incorrect format: chunk 2 id not 'data'"
       let nBytes = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)  
-      let data = Array.foldBack (fun x (l,r) -> ((float x)::r, l)) 
-                   (reader.ReadBytes(nBytes)) ([],[])
+      let data = 
+        let raw = reader.ReadBytes(nBytes)
+        if numChannels = 1 then 
+          (Array.map (fun x -> float x) raw |> Array.toList, [])
+        else
+          Array.foldBack (fun x (l,r) -> ((float x)::r, l)) raw ([],[])
 
-      SoundFile (float samplingRate, int numChannels, data, 
-        (int audioFormat = 1))
+      SoundFile (float samplingRate, numChannels, data, (audioFormat = 1))
