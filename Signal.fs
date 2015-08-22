@@ -2,6 +2,8 @@ namespace FSound
 
 module Signal =
 
+  open MathNet.Numerics.IntegralTransforms
+
   let sinewave amp freq phase samplingFreq startT endT =
     let t = seq [startT..(1.0/samplingFreq)..endT]
     let pi = System.Math.PI
@@ -16,6 +18,7 @@ module Signal =
     foldi' f 0 acc xs
 
   let dft samples =
+ 
     let dftComponent k s =
       let N = Seq.length s
       let w = 2.0*System.Math.PI*(float k)/(float N)
@@ -24,3 +27,20 @@ module Signal =
                                 (0.0, 0.0) s
     
     Seq.mapi (fun i _ -> dftComponent i samples) samples
+
+  /// <summary>Wrapper for the MathNet.Numerics (3.7.0) fourier transform.
+  /// First convert the float samples to System.Numerics.Complex.  Then
+  /// call MathNet.Numerics.IntegralTransforms.Fourier.Forward which modifies
+  /// the input inline</summary>
+  /// <param name="samples">sequence of real float samples</param>
+  /// <returns>complex array</returns>
+  let fft samples =
+
+    let cmplxSamples = 
+      samples 
+      |> Seq.map (fun x -> System.Numerics.Complex(x, 0.0))
+      |> Seq.toArray
+
+    Fourier.Forward(cmplxSamples)
+    cmplxSamples |> Array.map (fun x -> x.Real)
+
