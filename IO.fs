@@ -116,7 +116,6 @@ module IO =
       | 8 -> rawData.[n] |> int8 |> float
       | 16 -> float(System.BitConverter.ToInt16(rawData, n))
       | _ -> failwith "Bit depth must be either 8 or 16"
-
     member f.SamplingRate = samplingRate
     member f.BitDepth = bitDepth
     member f.RawData = rawData
@@ -145,4 +144,17 @@ module IO =
     |> Seq.map int16
     |> Seq.collect (fun x -> System.BitConverter.GetBytes(x))
     |> Seq.toArray
+
+  ///
+  /// <summary>Utility function to create a SoundFile instance, being a function
+  /// it can be curried</summary>
+  /// <param name="samplingRate">sampling rate - float</param>
+  /// <param name="numChannels">number of channels - int</param>
+  /// <param name="bitDepth">bits per sample - int</param>
+  /// <param name="isPCM">whether the data is PCM format - bool</param>
+  /// <param name="rawData">the raw data bytes - byte[]</param>
+  /// <returns>a SoundFile object</returns>
+  ///
+  let makeSoundFile samplingRate numChannels bitDepth isPCM rawData =
+    SoundFile(samplingRate, numChannels, bitDepth, isPCM, rawData)
     
