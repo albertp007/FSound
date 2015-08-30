@@ -131,7 +131,18 @@ module IO =
     member f.WriteWav path = 
       writeWavFile path (int f.SamplingRate, f.NumChannels, f.BitDepth, 
         f.RawData)
-    static member ReadWav (path:string) = readWavFile path |> SoundFile
+    // static member ReadWav (path:string) = readWavFile path |> SoundFile
+    static member ReadWav (path:string) = SoundFile (readWavFile path)
+
+  ///
+  /// <summary>Utility function to write a SoundFile object to a wav file
+  /// given a path</summary>
+  /// <param name="path">path of the wav file to be written to. Caution: if the
+  /// file already exists, it will be overwritten</param>
+  /// <param name="soundFile">SoundFile object</param>
+  /// <returns>unit</returns>
+  ///
+  let toWav path (soundFile:SoundFile) = soundFile.WriteWav path
 
   ///
   /// <summary>Utility function to convert a sequence of floats to a sequence
