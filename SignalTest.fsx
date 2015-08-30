@@ -1,32 +1,44 @@
 ﻿// Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#I @"packages\FSharp.Charting.0.90.12\lib\net40"
-#I @"packages\MathNet.Numerics.3.7.0\lib\net40"
-#r @"FSharp.Charting.dll"
-#r @"MathNet.Numerics.dll"
-#load "Signal.fs"
-#load "IO.fs"
+#I @"bin\Debug"
+#r @"FSound.dll"
 
 open FSound.Signal
 open FSound.IO
-open FSharp.Charting
-
-let seqToPoint s =
-  s |> Seq.mapi (fun i x -> (i,x))
 
 // Define your library scripting code here
-let testSinewave =
-  let start = 0.0
-  let endTime = 0.01
-  let sf = 44100.0
-  let s = sinewave 0.8 440.0 0.0 44100.0 0.0 2.0
-  let i = [start..(1.0/sf)..endTime]
-  Seq.zip i s |> Chart.Line
+let testWaveform waveformGen path=
+  waveformGen
+  |> floatTo16
+  |> Seq.toArray
+  |> makeSoundFile 44100.0 1 16 true
+  |> toWav path
 
-let testReadWavFile =
-  let wav = readWavFile @"chimes.wav"
-  fst wav.Data 
-  |> fft 
-  |> Array.mapi (fun i x -> (i, x)) 
-  |> Chart.Point
+let testSinusoid() =
+  testWaveform (sinusoidGenerator 20000.0 440.0 0.0 44100.0 2.0) 
+    @"sinusoid-440.wav"
+
+let testSquare() =
+  testWaveform (squareGenerator 20000.0 440.0 44100.0 2.0) @"square-440.wav"
+
+let testSaw() = 
+  testWaveform (sawGenerator 20000.0 440.0 44100.0 2.0) @"saw-440.wav"
+
+let testTriangle() =
+  testWaveform (triangleGenerator 20000.0 440.0 44100.0 2.0) @"triangle-440.wav"
+
+let testNoise() =
+  testWaveform (whiteNoiseGenerator 20000.0 44100.0 2.0) @"noise-440.wav"
+
+let testWave() =
+  testWaveform (waveGenerator 20000.0 0.05 44100.0 10.0) @"wave.wav"
+
+let test() =
+  testSinusoid()
+  testSquare()
+  testSaw()
+  testTriangle()
+  testNoise()
+  testWave()
+
