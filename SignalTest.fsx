@@ -29,7 +29,7 @@ let testTriangle() =
   testWaveform (triangleGenerator 20000.0 440.0 44100.0 2.0) @"triangle-440.wav"
 
 let testNoise() =
-  testWaveform (whiteNoiseGenerator 20000.0 44100.0 2.0) @"noise-440.wav"
+  testWaveform (whiteNoiseGenerator 20000.0 44100.0 2.0) @"whitenoise.wav"
 
 let testWave() =
   testWaveform (waveGenerator 20000.0 0.05 44100.0 10.0) @"wave.wav"
