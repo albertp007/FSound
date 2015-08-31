@@ -2,6 +2,25 @@
 
 module IO =
 
+  ///
+  /// <summary>This type represents Samples which can be one of the three cases
+  /// 1. Raw bytes
+  /// 2. Bit8 which is a 8 bit sample (interpreted as signed byte)
+  /// 3. Bit16 which is a 16-bit sample (interpreted as int16)
+  /// </summary>
+  /// 
+  type Samples =
+    | Raw of byte[]
+    | Bit8 of sbyte[]
+    | Bit16 of int16[]
+    member s.Length = match s with
+                      | Raw b -> b.Length
+                      | Bit8 b -> b.Length
+                      | Bit16 b-> b.Length
+    member s.NumBytes = match s with
+                        | Bit16 _ -> 2 * s.Length
+                        | _ -> s.Length
+
   let private genIndices numChannels bytesPerSample channel lengthSamples =
     let bytesPerChannel = bytesPerSample * numChannels
     let lengthSamples' = lengthSamples/bytesPerChannel*bytesPerChannel
@@ -48,7 +67,7 @@ module IO =
     let nBytes = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)  
 
     (float samplingRate, numChannels, bitsPerSample, (audioFormat = 1),
-      reader.ReadBytes(nBytes))
+      (Raw (reader.ReadBytes(nBytes))))
 
   ///
   /// <summary>Writes raw data and associated properties to a PCM wav file
@@ -58,12 +77,12 @@ module IO =
   /// <param name="sf">sampling frequency - int</param>
   /// <param name="nc">number of channels - short/int16</param>
   /// <param name="bps">bits per sample</param>
-  /// <param name="raw">byte array as raw data</param>
+  /// <param name="samples">Samples value</param>
   /// <returns>unit</returns>
   ///
-  let private writeWavFile path (sf, nc, bps, raw) =
+  let private writeWavFile path (sf, nc, bps, samples: Samples) =
     let chunkID = "RIFF"B
-    let chunkSize = 36 + Array.length raw
+    let chunkSize = 36 + samples.NumBytes
     let format = "WAVE"B
     let subChunk1ID = "fmt "B
     let subChunk1Size = 16
@@ -74,7 +93,7 @@ module IO =
     let blockAlign = int16 (nc * bps  / 8)
     let byteRate = samplingRate * nc * bps /8
     let subChunk2Id = "data"B
-    let subChunk2Size = Array.length raw
+    let subChunk2Size = samples.NumBytes
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
     writer.Write(chunkID)
@@ -90,8 +109,11 @@ module IO =
     writer.Write(bitsPerSample)
     writer.Write(subChunk2Id)
     writer.Write(subChunk2Size)
-    writer.Write(raw: byte[])
-
+    match samples with
+    | Raw bs -> writer.Write(bs)
+    | Bit8 bs -> bs |> Array.iter writer.Write 
+    | Bit16 bs -> bs |> Array.iter writer.Write
+  
   ///
   /// <summary>Type to represent a sound file</summary>
   /// <param name="samplingRate">sampling frequency</param>
@@ -99,38 +121,50 @@ module IO =
   /// <param name="bitDepth">number of bits per sample</param>
   /// <param name="isPCM">whether the format is PCM, for writing, it must be
   /// true</param>
-  /// <param name="rawData">byte array representing the raw sample data. A
-  /// sample contains number of bits equal to bitDepth bits per channel. 
-  /// Multiple channels are concatenated one after the other within the same
-  /// sample</param>
+  /// <param name="samples">A Samples value which can be either Raw byte[] or
+  /// interpreted as 8-bit or 16-bit signed sample. If there are more than one
+  /// channels, sample for each channel is concatenated one after the other
   /// <returns>SoundFile object</returns>
   ///
   type SoundFile (samplingRate: float, 
                   numChannels: int, 
                   bitDepth: int,
                   isPCM: bool,
-                  rawData: byte[]) =
+                  samples: Samples) =
 
-    let read bytes n = 
-      match bitDepth with
-      | 8 -> rawData.[n] |> int8 |> float
-      | 16 -> float(System.BitConverter.ToInt16(rawData, n))
-      | _ -> failwith "Bit depth must be either 8 or 16"
+    let read samples n = 
+      match samples with
+      | Raw bs -> match bitDepth with
+                  | 8 -> bs.[n] |> int8 |> float
+                  | 16 -> float(System.BitConverter.ToInt16(bs, n))
+                  | _ -> failwith "Bit depth must be either 8 or 16"
+      | Bit8 bs -> float bs.[n]
+      | Bit16 bs -> float bs.[n]
+
+    //
+    // if samples is Raw, then we need bitDepth to calculate number of elements
+    // in the array belonging to the same sample.  if samples is Bit8 or Bit16
+    // then it means bitDepth is already taken into account in the array and
+    // therefore the number of elements per sample is simply 1
+    //
+    let numElementsPerSample = match samples with
+                               | Raw _ -> bitDepth / 8
+                               | _ -> 1
+    
     member f.SamplingRate = samplingRate
     member f.BitDepth = bitDepth
-    member f.RawData = rawData
+    member f.Samples = samples
     member f.IsPCM = isPCM
     member f.NumChannels = numChannels
     member f.Channels = [|
       for i in [0..(numChannels-1)] ->
-      f.RawData
-      |> Array.length
-      |> genIndices numChannels (bitDepth/8) i
-      |> Seq.map (fun n -> read rawData n) 
+      samples.Length
+      |> genIndices numChannels numElementsPerSample i
+      |> Seq.map (fun n -> read samples n) 
       |]
     member f.WriteWav path = 
       writeWavFile path (int f.SamplingRate, f.NumChannels, f.BitDepth, 
-        f.RawData)
+        f.Samples)
     // static member ReadWav (path:string) = readWavFile path |> SoundFile
     static member ReadWav (path:string) = SoundFile (readWavFile path)
 
@@ -145,16 +179,23 @@ module IO =
   let toWav path (soundFile:SoundFile) = soundFile.WriteWav path
 
   ///
-  /// <summary>Utility function to convert a sequence of floats to a sequence
-  /// of shorts, ready to be written to a wav file</summary>
+  /// <summary>Utility function to convert a sequence of floats to a Samples
+  /// value, ready to be written to a wav file by the WriteWav function in
+  /// SoundFile</summary>
   /// <param name="f">sequence of floats to be converted</param>
-  /// <returns>sequence of short (int16)</returns>
+  /// <returns>Samples value</returns>
   ///
+  // Previously, floatTo16 converts to a byte array because that's the only way
+  // samples are represented in SoundFile.  With the Samples discriminated union
+  // however, samples can be represented by interpreted 8-bit or 16-bit samples
+  // directly.  The WriteWav function then uses BinaryWriter which is capable of
+  // writing sbyte or int16 directly.  This cuts down on a call to Seq.collect
+  // used to flatten the byte[] returned from System.BitConverter.GetBytes.
+  // Without this call, GC gen0 is cut down from 10 to 3 based on the
+  // SignalTest script testcases
+  //
   let floatTo16 (f:seq<float>) =
-    f
-    |> Seq.map int16
-    |> Seq.collect (fun x -> System.BitConverter.GetBytes(x))
-    |> Seq.toArray
+    f |> Seq.map int16 |> Seq.toArray |> Bit16
 
   ///
   /// <summary>Utility function to create a SoundFile instance, being a function
