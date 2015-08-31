@@ -11,7 +11,6 @@ open FSound.IO
 let testWaveform waveformGen path=
   waveformGen
   |> floatTo16
-  |> Seq.toArray
   |> makeSoundFile 44100.0 1 16 true
   |> toWav path
 
@@ -33,6 +32,15 @@ let testNoise() =
 
 let testWave() =
   testWaveform (waveGenerator 20000.0 0.05 44100.0 10.0) @"wave.wav"
+
+let testRead() =
+  let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
+           |> floatTo16
+           |> makeSoundFile 44100.0 1 16 true
+  let fileName = @"temp_square.wav"
+  w1.WriteWav fileName
+  let w2 = SoundFile.ReadWav fileName
+  ( w1.Channels.[0] |> Seq.toArray ) = (w1.Channels.[0] |> Seq.toArray )
 
 let test() =
   testSinusoid()
