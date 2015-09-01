@@ -1,6 +1,7 @@
 //
 // FSound - F# Sound Processing Library
-// Copyright (c) 2015  Albert Pang. All rights reserved.
+// Copyright (c) 2015 by Albert Pang <albert.pang@me.com> 
+// All rights reserved.
 //
 // This file is a part of FSound
 //
