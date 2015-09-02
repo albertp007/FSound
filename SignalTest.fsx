@@ -50,6 +50,12 @@ let testNoise() =
 let testWave() =
   testWaveform (waveGenerator 20000.0 44100.0 40.0) @"wave.wav"
 
+let testAdsr() =
+  let signal = triangle 20000.0 2000.0
+  let adsr = (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  testWaveform (modulate signal adsr |> generate 44100.0 2.0) 
+    @"triangle-adsr.wav"
+
 let testRead() =
   let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
            |> floatTo16
@@ -66,4 +72,5 @@ let test() =
   testTriangle()
   testNoise()
   testWave()
+  testAdsr()
 

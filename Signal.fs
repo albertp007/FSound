@@ -126,6 +126,38 @@ module Signal =
   /// <returns>value of the lfo at time t</returns>
   let lfo f depth t =
     ((sinusoid 1.0 f 0.0 t) + 1.0) * 0.5 * depth + (1.0 - depth)
+
+  ///
+  /// <summary>ADSR envelope</summary>
+  /// <param name="at_t">Duration of attack (sec)</param>
+  /// <param name="at_level">Attach level</param>
+  /// <param name="decay_t">Duration of decay period (sec)</param>
+  /// <param name="sus_perc">Suspension level as a percentage of attack level
+  /// </param>
+  /// <param name="sus_t">Duration of suspension (sec)</param>
+  /// <param name="release_t">Duration of release (sec)</param>
+  /// <returns>Value of the ADSR envelope at time t</returns>
+  ///
+  let adsr at_t at_level decay_t sus_perc sus_t release_t t =
+    let sus_level = at_level * sus_perc
+    let attack_start = 0.0
+    let decay_start = at_t
+    let suspend_start = decay_start + decay_t
+    let release_start = suspend_start + sus_t
+    let release_end = release_start + release_t
+    let (intercept, slope, start_point) =
+      match t with
+      | t when t >= attack_start && t < decay_start-> 
+        (0.0, at_level/at_t, attack_start)
+      | t when t >= decay_start && t < suspend_start -> 
+          (at_level, (sus_perc-1.0)*at_level/decay_t, decay_start)
+      | t when t >= suspend_start && t < release_start -> 
+          (sus_level, 0.0, suspend_start)
+      | t when t >= release_start && t < release_end ->
+          (sus_level, -sus_level/release_t, release_start )
+      | _ -> (0.0, 0.0, release_end)
+    (t - start_point)*slope + intercept
+
     
   ///
   /// <summary>Convenience function which combines sinusoid waveform with
