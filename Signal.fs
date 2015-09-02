@@ -116,6 +116,18 @@ module Signal =
     (waveform t) * (modulator t)
 
   ///
+  /// <summary>Low frequency oscillator</summary>
+  /// <param name="f">Frequency(Hz)</param>
+  /// <param name="depth">Depth - from 0.0 to 1.0.  When it is set to 0, the
+  /// LFO always output 1.0 and therefore it has no effect.  When it is set to 1
+  /// it will have full effect.  A value in between 0.0 and 1.0 means it will
+  /// have some positive value at its lowest and won't cause the modulated
+  /// signal to go to zero</param>
+  /// <returns>value of the lfo at time t</returns>
+  let lfo f depth t =
+    ((sinusoid 1.0 f 0.0 t) + 1.0) * 0.5 * depth + (1.0 - depth)
+    
+  ///
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
@@ -148,8 +160,8 @@ module Signal =
   /// <param name="t">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let waveGenerator a f sf t =
-    modulate (whiteNoise a) (sinusoid 1.0 f 0.0)
+  let waveGenerator a sf t =
+    modulate (whiteNoise a) (lfo 0.05 0.8)
     |> generate sf t
 
   ///

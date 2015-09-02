@@ -48,7 +48,7 @@ let testNoise() =
   testWaveform (whiteNoiseGenerator 20000.0 44100.0 2.0) @"whitenoise.wav"
 
 let testWave() =
-  testWaveform (waveGenerator 20000.0 0.05 44100.0 10.0) @"wave.wav"
+  testWaveform (waveGenerator 20000.0 44100.0 40.0) @"wave.wav"
 
 let testRead() =
   let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
