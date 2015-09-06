@@ -217,7 +217,7 @@ module Signal =
   ///
   let waveGenerator sf tau =
     let delay' = delay 1 0.0
-    let wf t = (whiteNoise 20000.0 t) * (lfo 0.05 0.8 t)
+    let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.8 t)
     let seaWave t = delay' (wf t)
     seaWave
     |> generate sf tau
