@@ -48,7 +48,7 @@ let testNoise() =
   testWaveform (whiteNoiseGenerator 20000.0 44100.0 2.0) @"whitenoise.wav"
 
 let testWave() =
-  testWaveform (waveGenerator 20000.0 44100.0 40.0) @"wave.wav"
+  testWaveform (waveGenerator 44100.0 40.0) @"wave.wav"
 
 let testAdsr() =
   let signal = triangle 20000.0 2000.0

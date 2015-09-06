@@ -23,6 +23,7 @@ namespace FSound
 module Signal =
 
   open MathNet.Numerics.IntegralTransforms
+  open FSound.Data
 
   let private random = System.Random()
 
@@ -31,13 +32,13 @@ module Signal =
   /// duration (in seconds) required and a waveform function which returns the
   /// value (float) at a given time t (float)</summary>
   /// <param name="sf">Sampling frequency</param>
-  /// <param name="t">Duration in seconds</param>
+  /// <param name="tau">Duration in seconds</param>
   /// <param name="waveFunc">Waveform function</param>
   /// <returns>Sequence of floats representing the sequence of samples generated
   /// </returns>
   ///
-  let generate sf t waveFunc =
-    let t = seq [0.0..(1.0/sf)..t]
+  let generate sf tau waveFunc =
+    let t = seq [0.0..(1.0/sf)..tau]
     Seq.map waveFunc t
 
   ///
@@ -112,7 +113,6 @@ module Signal =
   /// time t and the value of the modulator waveform at time t</returns>
   ///    
   let modulate (waveform:float->float) (modulator:float->float) (t: float) =
-    let primary = waveform t
     (waveform t) * (modulator t)
 
   ///
@@ -123,6 +123,7 @@ module Signal =
   /// it will have full effect.  A value in between 0.0 and 1.0 means it will
   /// have some positive value at its lowest and won't cause the modulated
   /// signal to go to zero</param>
+  /// <param name="t">time in seconds</param>
   /// <returns>value of the lfo at time t</returns>
   let lfo f depth t =
     ((sinusoid 1.0 f 0.0 t) + 1.0) * 0.5 * depth + (1.0 - depth)
@@ -136,6 +137,7 @@ module Signal =
   /// </param>
   /// <param name="sus_t">Duration of suspension (sec)</param>
   /// <param name="release_t">Duration of release (sec)</param>
+  /// <param name="t">time in seconds</param>
   /// <returns>Value of the ADSR envelope at time t</returns>
   ///
   let adsr at_t at_level decay_t sus_perc sus_t release_t t =
@@ -158,7 +160,28 @@ module Signal =
       | _ -> (0.0, 0.0, release_end)
     (t - start_point)*slope + intercept
 
-    
+  /// <summary>Delay a sequence of samples by N sample. Note that a
+  /// CircularBuffer object is created to keep track of historical samples
+  /// each time the function is instantiated!</summary>
+  /// <param name="n">The number of samples to delay</param>
+  /// <param name="initValue">Initial value of the windowing buffer before it is
+  /// fully populated</param>
+  /// <returns>sequence of samples which is the summation of the original sample
+  /// and the n-th sample before it</returns>
+  let delay n (initValue: float) =
+    let buffer = CircularBuffer<float>( n, initValue )
+    fun sample -> 
+      let res = sample + buffer.Get()
+      buffer.Push( sample )
+      res
+
+  ///
+  /// <summary>Waveform generation function to simulate the sound of waves
+  /// with an lfo modulating white noise and post-processed by a delay of 1 
+  /// sample as a very crude low-pass filter</summary>
+  ///
+  let filter filterFunc waveFormFunc t = waveFormFunc t |> filterFunc
+          
   ///
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
@@ -166,22 +189,22 @@ module Signal =
   /// <param name="f">frequency of the sinusoid</param>
   /// <param name="ph">phase of the sinusoid</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let sinusoidGenerator a f ph sf t =
-    sinusoid a f ph |> generate sf t
+  let sinusoidGenerator a f ph sf tau =
+    sinusoid a f ph |> generate sf tau
 
   ///
   /// <summary>Convenience function which combines whitenoise waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let whiteNoiseGenerator a sf t =
-    whiteNoise a |> generate sf t
+  let whiteNoiseGenerator a sf tau =
+    whiteNoise a |> generate sf tau
 
   ///
   /// <summary>Implements a very crude model of the sound of waves by modulating
@@ -189,12 +212,15 @@ module Signal =
   /// <param name="a">amplitude</param>
   /// <param name="f">LFO frequency</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let waveGenerator a sf t =
-    modulate (whiteNoise a) (lfo 0.05 0.8)
-    |> generate sf t
+  let waveGenerator sf tau =
+    let delay' = delay 1 0.0
+    let wf t = (whiteNoise 20000.0 t) * (lfo 0.05 0.8 t)
+    let seaWave t = delay' (wf t)
+    seaWave
+    |> generate sf tau
 
   ///
   /// <summary>Convenience function which combines square waveform with
@@ -202,11 +228,11 @@ module Signal =
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency of the square waveform</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let squareGenerator a f sf t =
-    square a f |> generate sf t
+  let squareGenerator a f sf tau =
+    square a f |> generate sf tau
 
   ///
   /// <summary>Convenience function which combines saw-tooth waveform with
@@ -214,11 +240,11 @@ module Signal =
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency of the saw-tooth waveform</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let sawGenerator a f sf t =
-    saw a f |> generate sf t
+  let sawGenerator a f sf tau =
+    saw a f |> generate sf tau
 
   ///
   /// <summary>Convenience function which combines triangular waveform with
@@ -226,11 +252,11 @@ module Signal =
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency of the triangular waveform</param>
   /// <param name="sf">sampling frequency</param>
-  /// <param name="t">duration of the samples to be generated</param>
+  /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let triangleGenerator a f sf t =
-    triangle a f |> generate sf t
+  let triangleGenerator a f sf tau =
+    triangle a f |> generate sf tau
 
   ///
   /// <summary>Folding with an index</summary>
@@ -281,4 +307,3 @@ module Signal =
 
     Fourier.Forward(cmplxSamples)
     cmplxSamples |> Array.map (fun x -> x.Real)
-

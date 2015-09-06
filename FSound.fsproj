@@ -51,11 +51,12 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <None Include="SignalTest.fsx" />
+    <Compile Include="Data.fs" />
+    <Compile Include="IO.fs" />
     <Compile Include="Signal.fs" />
     <Content Include="packages.config" />
     <Content Include="app.config" />
-    <Compile Include="IO.fs" />
+    <None Include="SignalTest.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Charting">
