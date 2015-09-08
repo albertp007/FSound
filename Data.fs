@@ -22,6 +22,8 @@ namespace FSound
 
 module Data =
 
+  open System.Collections.Generic
+
   /// <summary>Simple implementation of circular buffer using an array</summary>
   /// <param name="n">Number of slots in the window, used to initialize the
   /// size of the array used as buffer</param>
@@ -60,3 +62,41 @@ module Data =
     /// with a new item by a call to Push()</summary>
     ///
     member t.CurrentIndex() = current
+
+  /// <summary>Simple implementation of a moving window using .Net Queue<'T>
+  /// </summary>
+  type MovingWindow<'T> (init:seq<'T>) =
+    let window = Queue<'T>(init)
+    let size = window.Count
+    do printfn "New instance of MovingWindow"
+    ///
+    /// <summary>Push an item into the window. If the queue is already full,
+    /// an item will first be dequeued before the new item is pushed into it
+    /// </summary>
+    ///
+    member t.Push item =
+      window.Dequeue() |> ignore
+      window.Enqueue( item )
+      item
+
+    ///
+    /// <summary>Converts the queue object representing the window to a sequence
+    /// Note that the first element of the seq is the oldest one</summary>
+    ///
+    member t.Get() = window :> seq<'T>
+
+    ///
+    /// <summary>Converts the queue object representing the window to an array
+    /// Note that the first element of the array is the oldest one</summary>
+    ///
+    member t.GetArray() = window.ToArray()
+
+    ///
+    /// <summary>Get the count of elements in the window</summary>
+    ///
+    member t.Count() = window.Count
+
+    ///
+    /// <summary>Checks if the window is fully populated</summary>
+    ///
+    member t.IsFull() = ( t.Count() = size )

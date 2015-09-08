@@ -168,7 +168,7 @@ module Signal =
   /// fully populated</param>
   /// <returns>sequence of samples which is the summation of the original sample
   /// and the n-th sample before it</returns>
-  let delay n (initValue: float) =
+  let simpleDelay n (initValue: float) =
     let buffer = CircularBuffer<float>( n, initValue )
     fun sample -> 
       let res = sample + buffer.Get()
@@ -176,11 +176,29 @@ module Signal =
       res
 
   ///
-  /// <summary>Waveform generation function to simulate the sound of waves
-  /// with an lfo modulating white noise and post-processed by a delay of 1 
-  /// sample as a very crude low-pass filter</summary>
+  /// <summary>Filter with feedforward and feedback coefficients
+  /// y(n) = ff0 * x(n) + ff1 * x(n-1) + ... + ffm * x(n-m) +
+  ///        fb0 * y(n-1) + fb1 * y(n-2) + ... + fbm * x(n-m-1)
+  /// </summary>
+  /// <param name="ffcoeff">feed forward coefficients for the input samples
+  /// </param>
+  /// <param name="fbcoeff">feed back coefficients for the output samples
+  /// </param>
+  /// <returns>A function which takes in a float as a sample and returns y(n)
+  /// </returns>
   ///
-  let filter filterFunc waveFormFunc t = waveFormFunc t |> filterFunc
+  let filter ffcoeff fbcoeff =
+    let makeMovingWindow n = MovingWindow<float>(Seq.init n (fun _ -> 0.0))
+    let ff_w = makeMovingWindow (Seq.length ffcoeff)
+    let fb_w = makeMovingWindow (Seq.length fbcoeff)
+    let rev_ff = Seq.rev ffcoeff
+    let rev_fb = Seq.rev fbcoeff
+    let dot (w:MovingWindow<float>) coeff = 
+      Seq.fold2 (fun a t1 t2 -> a + t1*t2) 0.0 coeff (w.Get())
+    function s -> ff_w.Push(s) |> ignore
+                  let s' = dot ff_w rev_ff
+                  let w' = s' + dot fb_w rev_fb
+                  fb_w.Push(w')
           
   ///
   /// <summary>Convenience function which combines sinusoid waveform with
@@ -216,7 +234,7 @@ module Signal =
   /// <returns>Sequence of samples</returns>
   ///
   let waveGenerator sf tau =
-    let delay' = delay 1 0.0
+    let delay' = simpleDelay 1 0.0
     let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.8 t)
     let seaWave t = delay' (wf t)
     seaWave
@@ -257,6 +275,7 @@ module Signal =
   ///
   let triangleGenerator a f sf tau =
     triangle a f |> generate sf tau
+
 
   ///
   /// <summary>Folding with an index</summary>
