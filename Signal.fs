@@ -23,6 +23,7 @@ namespace FSound
 module Signal =
 
   open MathNet.Numerics.IntegralTransforms
+  open MathNet.Numerics.LinearAlgebra.Double
   open FSound.Data
 
   let private random = System.Random()
@@ -191,13 +192,11 @@ module Signal =
     let makeMovingWindow n = MovingWindow<float>(Seq.init n (fun _ -> 0.0))
     let ff_w = makeMovingWindow (Seq.length ffcoeff)
     let fb_w = makeMovingWindow (Seq.length fbcoeff)
-    let rev_ff = Seq.rev ffcoeff
-    let rev_fb = Seq.rev fbcoeff
-    let dot (w:MovingWindow<float>) coeff = 
-      Seq.fold2 (fun a t1 t2 -> a + t1*t2) 0.0 coeff (w.Get())
+    let rev_ff = DenseVector(Seq.rev ffcoeff |> Seq.toArray)
+    let rev_fb = DenseVector(Seq.rev fbcoeff |> Seq.toArray)
     function s -> ff_w.Push(s) |> ignore
-                  let s' = dot ff_w rev_ff
-                  let w' = s' - dot fb_w rev_fb
+                  let s' = rev_ff.DotProduct( DenseVector(ff_w.GetArray()))
+                  let w' = s' - rev_fb.DotProduct( DenseVector(fb_w.GetArray()))
                   fb_w.Push(w')
           
   ///
@@ -234,9 +233,10 @@ module Signal =
   /// <returns>Sequence of samples</returns>
   ///
   let waveGenerator sf tau =
-    let delay = simpleDelay 1 0.0
+    // let delay = simpleDelay 1 0.0
+    let comb = filter [1.0; 0.0; 0.0; 0.5**3.0] [0.0; 0.0; 0.0; 0.0; 0.9**5.0]
     let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.8 t)
-    wf >> delay
+    wf >> comb
     |> generate sf tau
 
   ///
