@@ -197,7 +197,7 @@ module Signal =
       Seq.fold2 (fun a t1 t2 -> a + t1*t2) 0.0 coeff (w.Get())
     function s -> ff_w.Push(s) |> ignore
                   let s' = dot ff_w rev_ff
-                  let w' = s' + dot fb_w rev_fb
+                  let w' = s' - dot fb_w rev_fb
                   fb_w.Push(w')
           
   ///
