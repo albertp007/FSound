@@ -177,8 +177,8 @@ module Signal =
 
   ///
   /// <summary>Filter with feedforward and feedback coefficients
-  /// y(n) = ff0 * x(n) + ff1 * x(n-1) + ... + ffm * x(n-m) +
-  ///        fb0 * y(n-1) + fb1 * y(n-2) + ... + fbm * x(n-m-1)
+  /// y(n) = ff0 * x(n) + ff1 * x(n-1) + ... + ffm * x(n-m) -
+  ///        (fb0 * y(n-1) + fb1 * y(n-2) + ... + fbm * x(n-m-1))
   /// </summary>
   /// <param name="ffcoeff">feed forward coefficients for the input samples
   /// </param>
@@ -234,10 +234,9 @@ module Signal =
   /// <returns>Sequence of samples</returns>
   ///
   let waveGenerator sf tau =
-    let delay' = simpleDelay 1 0.0
+    let delay = simpleDelay 1 0.0
     let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.8 t)
-    let seaWave t = delay' (wf t)
-    seaWave
+    wf >> delay
     |> generate sf tau
 
   ///
