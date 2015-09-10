@@ -56,6 +56,18 @@ let testAdsr() =
   testWaveform (modulate signal adsr |> generate 44100.0 2.0) 
     @"triangle-adsr.wav"
 
+let testFilter() =
+  let r1 = List.map (filter [1.0; 0.0; 0.0; 0.5**3.0] 
+                           [0.0; 0.0; 0.0; 0.0; 0.9**5.0]) 
+                   (1.0::(List.init 29 (fun _ -> 0.0)))
+  let r2 = [1.0; 0.0; 0.0; 0.125; 0.0; -0.59049; 0.0; 0.0; -0.07381125; 0.0;
+    0.3486784401; 0.0; 0.0; 0.04358480501; 0.0; -0.2058911321; 0.0; 0.0;
+    -0.02573639151; 0.0; 0.1215766546; 0.0; 0.0; 0.01519708182; 0.0;
+    -0.07178979877; 0.0; 0.0; -0.008973724846; 0.0]
+  List.map2 (fun x y -> abs (x - y)) r1 r2
+  |> List.forall (fun x -> x < 0.000000001)
+  |> ( fun x -> if x then x else failwith "testFilter failed")
+
 let testRead() =
   let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
            |> floatTo16
@@ -73,4 +85,5 @@ let test() =
   testNoise()
   testWave()
   testAdsr()
+  testFilter()
 
