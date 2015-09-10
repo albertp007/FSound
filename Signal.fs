@@ -210,6 +210,13 @@ module Signal =
                   fb_w.Push(w')
           
   ///
+  /// <summary>Hard-clips a sample</summary>
+  /// <param name="level">the level the sample is going to be clipped at</param>
+  /// <returns>the value of the sample after clipping
+  ///
+  let clip level (s:float) =
+    if s > level then level else s
+
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
