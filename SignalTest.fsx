@@ -68,6 +68,13 @@ let testFilter() =
   |> List.forall (fun x -> x < 0.000000001)
   |> ( fun x -> if x then x else failwith "testFilter failed")
 
+let testSum() =
+  let wf = sum [sinusoid 8000.0 10.0 0.0; 
+                sinusoid 7200.0 25.0 0.0; 
+                sinusoid 6400.0 50.0 0.0] 
+           |> generate 44100.0 10.0
+  testWaveform wf @"sum.wav"
+
 let testRead() =
   let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
            |> floatTo16

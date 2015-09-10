@@ -117,6 +117,16 @@ module Signal =
     (waveform t) * (modulator t)
 
   ///
+  /// <summary>Sums a sequence of waveform functions at time t</summary>
+  /// <param name="waveforms">Sequence of waveform functions</param>
+  /// <param name="t">time in seconds</param>
+  /// <returns>the value of summing the value of all the waveform functions in
+  /// the list at time t</returns>
+  ///
+  let sum waveforms (t:float) =
+    Seq.fold (fun acc wf -> acc + wf t) 0.0 waveforms
+
+  ///
   /// <summary>Low frequency oscillator</summary>
   /// <param name="f">Frequency(Hz)</param>
   /// <param name="depth">Depth - from 0.0 to 1.0.  When it is set to 0, the
