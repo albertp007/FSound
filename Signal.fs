@@ -25,6 +25,7 @@ module Signal =
   open MathNet.Numerics.IntegralTransforms
   open MathNet.Numerics.LinearAlgebra.Double
   open FSound.Data
+  open FSound.IO
 
   let private random = System.Random()
 
@@ -175,14 +176,15 @@ module Signal =
   /// CircularBuffer object is created to keep track of historical samples
   /// each time the function is instantiated!</summary>
   /// <param name="n">The number of samples to delay</param>
+  /// <param name="g">Gain of the delayed sample</param>
   /// <param name="initValue">Initial value of the windowing buffer before it is
   /// fully populated</param>
   /// <returns>sequence of samples which is the summation of the original sample
   /// and the n-th sample before it</returns>
-  let simpleDelay n (initValue: float) =
+  let simpleDelay n g (initValue: float) =
     let buffer = CircularBuffer<float>( n, initValue )
     fun sample -> 
-      let res = sample + buffer.Get()
+      let res = sample + g * buffer.Get()
       buffer.Push( sample )
       res
 
@@ -342,3 +344,18 @@ module Signal =
 
     Fourier.Forward(cmplxSamples)
     cmplxSamples |> Array.map (fun x -> x.Real)
+
+  ///
+  /// <summary>Convenience function to generate a wav file with the supplied 
+  /// wave function which is of compact disc parameters i.e. 44100Hz sampling 
+  /// rate and 16-bit sample. Only one channel is created</summary>
+  /// <param name="duration">number of seconds</param>
+  /// <param name="filename">filename of the output wav file</param>
+  /// <param name="waveform">the waveform function</param>
+  ///
+  let wavCd1Ch duration filename waveform =
+    waveform
+    |> generate 44100.0 duration
+    |> floatTo16
+    |> makeSoundFile 44100.0 1 16 true
+    |> toWav filename
