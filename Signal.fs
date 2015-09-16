@@ -204,11 +204,13 @@ module Signal =
     let makeMovingWindow n = MovingWindow<float>(Seq.init n (fun _ -> 0.0))
     let ff_w = makeMovingWindow (Seq.length ffcoeff)
     let fb_w = makeMovingWindow (Seq.length fbcoeff)
+    let ff_only = Seq.toList fbcoeff |> Seq.forall (fun x -> x = 0.0)
     let rev_ff = DenseVector(Seq.rev ffcoeff |> Seq.toArray)
     let rev_fb = DenseVector(Seq.rev fbcoeff |> Seq.toArray)
     function s -> ff_w.Push(s) |> ignore
                   let s' = rev_ff.DotProduct( DenseVector(ff_w.GetArray()))
-                  let w' = s' - rev_fb.DotProduct( DenseVector(fb_w.GetArray()))
+                  let w' = if ff_only then s' else 
+                           s' - rev_fb.DotProduct( DenseVector(fb_w.GetArray()))
                   fb_w.Push(w')
           
   ///
