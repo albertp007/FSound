@@ -353,7 +353,7 @@ module Signal =
   /// <param name="filename">filename of the output wav file</param>
   /// <param name="waveform">the waveform function</param>
   ///
-  let wavCd1Ch duration filename waveform =
+  let wavCd1 duration filename waveform =
     waveform
     |> generate 44100.0 duration
     |> floatTo16
