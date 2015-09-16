@@ -359,3 +359,13 @@ module Signal =
     |> floatTo16
     |> makeSoundFile 44100.0 1 16 true
     |> toWav filename
+
+  ///
+  /// <summary>Generate impulse response for a filter</summary>
+  /// <param name="n">Number of samples</param>
+  /// <param name="filter">the filter function</param>
+  /// <returns>impulse response of length n</returns>
+  ///
+  let impulseResponse n filter =
+    let impulse = 1.0::(List.init n (fun _ -> 0.0))
+    Seq.map filter impulse
