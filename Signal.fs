@@ -410,3 +410,34 @@ module Signal =
   let impulseResponse n filter =
     let impulse = 1.0::(List.init n (fun _ -> 0.0))
     Seq.map filter impulse
+
+  ///
+  /// <summary>A simple resonator</summary>
+  /// <param name="fs">sampling frequency</param>
+  /// <param name="fc">center frequency</param>
+  /// <param name="q">Q factor</param>
+  /// <returns>resonator function</returns>
+  ///
+  let simpleResonator fs fc q =
+    let theta = 2.0 * System.Math.PI * fc / fs
+    let w = fc / q
+    let b2 = exp (-2.0*System.Math.PI*w/fs)
+    let b1 = -4.0 * b2 / (1.0 + b2) * (cos theta)
+    let a0 = ( 1.0 - b2 ) * sqrt ( 1.0 - b1*b1/4.0/b2)
+    filter [a0] [b1; b2]
+
+  ///
+  /// <summary>Smith-Angell resonator</summary>
+  /// <param name="fs">sampling frequency</param>
+  /// <param name="fc">center frequency</param>
+  /// <param name="q">Q factor</param>
+  /// <returns>resonator function</returns>
+  ///
+  let smithAngell fs fc q =
+    let theta = 2.0 * System.Math.PI * fc / fs
+    let w = fc / q
+    let b2 = exp ( -2.0 * System.Math.PI * w / fs )
+    let b1 = -4.0 * b2 / ( 1.0 + b2 ) * (cos theta)
+    let a0 = 1.0 - sqrt b2
+    let a2 = -a0
+    filter [a0; 0.0; a2] [b1; b2]
