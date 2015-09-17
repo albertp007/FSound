@@ -357,11 +357,27 @@ module Signal =
   let magnitude (c:System.Numerics.Complex) = c.Magnitude
 
   ///
+  /// <summary>Returns the seq of magnitudes of a seq of complex numbers
+  /// </summary>
+  /// <param name="cs">sequence of complex numbers</param>
+  /// <returns>sequence of magnitudes of sequence of complex numbers</returns>
+  ///
+  let magnitudes (cs:seq<System.Numerics.Complex>) = Seq.map magnitude cs
+
+  ///
   /// <summary>Returns the phase of a complex number</summary>
   /// <param name="c">a complex number</param>
   /// <returns>Phase of the given complex number</returns>
   ///
   let phase (c:System.Numerics.Complex) = c.Phase
+
+  ///
+  /// <summary>Returns the seq of phases of a seq of complex numbers
+  /// </summary>
+  /// <param name="cs">sequence of complex numbers</param>
+  /// <returns>sequence of phases of sequence of complex numbers</returns>
+  ///
+  let phases (cs:seq<System.Numerics.Complex>) = Seq.map phase cs
 
   ///
   /// <summary>Returns the magnitude and phase of a complex number</summary>
