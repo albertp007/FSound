@@ -331,12 +331,14 @@ module Signal =
     
     Seq.mapi (fun i _ -> dftComponent i samples) samples
 
+  ///
   /// <summary>Wrapper for the MathNet.Numerics (3.7.0) fourier transform.
   /// First convert the float samples to System.Numerics.Complex.  Then
   /// call MathNet.Numerics.IntegralTransforms.Fourier.Forward which modifies
   /// the input inline</summary>
   /// <param name="samples">sequence of real float samples</param>
   /// <returns>complex array</returns>
+  ///
   let fft samples =
 
     let cmplxSamples = 
@@ -345,8 +347,29 @@ module Signal =
       |> Seq.toArray
 
     Fourier.Forward(cmplxSamples)
-    cmplxSamples |> Array.map (fun x -> x.Real)
+    cmplxSamples
 
+  ///
+  /// <summary>Returns magnitude of a complex number</summary>
+  /// <param name="c">a complex number</param>
+  /// <returns>Magnitude of the given complex number</returns>
+  ///
+  let magnitude (c:System.Numerics.Complex) = c.Magnitude
+
+  ///
+  /// <summary>Returns the phase of a complex number</summary>
+  /// <param name="c">a complex number</param>
+  /// <returns>Phase of the given complex number</returns>
+  ///
+  let phase (c:System.Numerics.Complex) = c.Phase
+
+  ///
+  /// <summary>Returns the magnitude and phase of a complex number</summary>
+  /// <param name="c">a complex number</param>
+  /// <returns>A pair containing the magnitude and phase of the given complex
+  /// number</returns>
+  ///
+  let toPolar (c:System.Numerics.Complex) = (magnitude c, phase c)
   ///
   /// <summary>Convenience function to generate a wav file with the supplied 
   /// wave function which is of compact disc parameters i.e. 44100Hz sampling 
