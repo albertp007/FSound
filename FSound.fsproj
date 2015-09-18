@@ -53,7 +53,9 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="IO.fs" />
+    <Compile Include="Filter.fs" />
     <Compile Include="Signal.fs" />
+    <Compile Include="Utilities.fs" />
     <Content Include="packages.config" />
     <Content Include="app.config" />
     <None Include="SignalTest.fsx" />

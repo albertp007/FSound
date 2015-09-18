@@ -23,6 +23,7 @@
 
 open FSound.Signal
 open FSound.IO
+open FSound.Filter
 
 // Define your library scripting code here
 let testWaveform waveformGen path=
