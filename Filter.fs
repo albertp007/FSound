@@ -57,7 +57,7 @@ module Filter =
   /// <param name="filter">the filter function</param>
   /// <returns>impulse response of length n</returns>
   ///
-  let impulseResponse n filter =
+  let impulseResponse n (filter:float->float) =
     let impulse = 1.0::(List.init n (fun _ -> 0.0))
     Seq.map filter impulse
 
