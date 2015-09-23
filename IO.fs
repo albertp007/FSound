@@ -22,6 +22,8 @@ namespace FSound
 
 module IO =
 
+  open System.IO
+
   ///
   /// <summary>This type represents Samples which can be one of the three cases
   /// 1. Raw bytes
@@ -40,6 +42,18 @@ module IO =
     member s.NumBytes = match s with
                         | Bit16 _ -> 2 * s.Length
                         | _ -> s.Length
+
+  let samplesToBytes (samples:Samples) =
+    match samples with
+    | Raw bs -> bs
+    | others -> use ms = new MemoryStream(samples.NumBytes)
+                use writer = new BinaryWriter(ms)
+                match others with
+                | Bit8 bs -> bs |> Array.iter writer.Write
+                             ms.GetBuffer()
+                | Bit16 bs -> bs |> Array.iter writer.Write
+                              ms.GetBuffer()
+                | _ -> failwith "Should never have come here"
 
   let private genIndices numChannels bytesPerSample channel lengthSamples =
     let bytesPerChannel = bytesPerSample * numChannels
