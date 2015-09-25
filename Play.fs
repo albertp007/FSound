@@ -63,16 +63,16 @@ module Play =
   let play2 sampleRate (samples:float[]) =
     let worker = new BackgroundWorker()
     let duration = samples.Length/sampleRate
-    let mutable posRead = 0
+    let posRead = ref 0
     let provider = {
       new ISampleProvider with 
 
         member p.Read(buffer, offset, count) = 
           let samples' = samples |> Array.map float32
           let size = samples.Length
-          let count' = if posRead+count <= size then count else size-posRead
-          Array.blit samples' posRead buffer offset count'
-          posRead <- posRead + count'
+          let count' = if !posRead+count <= size then count else size-(!posRead)
+          Array.blit samples' !posRead buffer offset count'
+          posRead := !posRead + count'
           if count' < count then 0 else count'
         member p.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 
                                                                     1)
