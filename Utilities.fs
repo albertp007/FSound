@@ -25,6 +25,7 @@ module Utilities =
   open MathNet.Numerics.IntegralTransforms
   open FSound.IO
   open FSound.Signal
+  open FSound.Play
 
   ///
   /// <summary>Folding with an index</summary>
@@ -115,6 +116,7 @@ module Utilities =
   /// number</returns>
   ///
   let toPolar (c:System.Numerics.Complex) = (magnitude c, phase c)
+  
   ///
   /// <summary>Convenience function to generate a wav file with the supplied 
   /// wave function which is of compact disc parameters i.e. 44100Hz sampling 
@@ -129,3 +131,19 @@ module Utilities =
     |> floatTo16
     |> makeSoundFile 44100.0 1 16 true
     |> toWav filename
+
+  ///
+  /// <summary>Yet another convenience function to play a wave function for a
+  /// given duration in seconds, just to save some typing</summary>
+  /// <param name="sf">sampling frequency</param>
+  /// <param name="duration">duration in number of seconds</param>
+  /// <param name="waveFunc">the waveform function which takes a time t as
+  /// argument and return a sample</param>
+  /// <returns>unit</returns>
+  ///
+  let playWave sf duration waveFunc =
+    waveFunc
+    |> generate sf duration
+    |> floatTo16
+    |> makeSoundFile sf 1 16 true
+    |> playSoundFile
