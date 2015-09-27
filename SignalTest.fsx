@@ -24,6 +24,7 @@
 open FSound.Signal
 open FSound.IO
 open FSound.Filter
+open FSound.Utilities
 
 // Define your library scripting code here
 let testWaveform waveformGen path=
@@ -88,6 +89,31 @@ let testRead() =
 let testClip() =
   testWaveform (sinusoid 20000.0 256.0 0.0 >> clip 16000.0 
                 |> generate 44100.0 5.0) @"clip.wav"
+
+let funny() =
+  let adsr1 = adsr 0.05 1.0 0.05 0.3 0.1 0.05
+  let sleep (tau:int) = System.Threading.Thread.Sleep tau
+  let playDuration tau (waveFunc:float->float) = playWave 44100.0 tau waveFunc
+                                                 sleep (((int tau) + 1) * 1000)
+  let play = playDuration 2.0
+  
+  // a triangle wave with an adsr
+  (modulate (triangle 20000.0 2000.0) adsr1) |> play
+
+  // saw wave with smith angell resonator at 1024
+  (saw 20000.0 440.0 >> smithAngell 44100.0 1024.0 10.0) |> play
+
+  // noise with resonator
+  (whiteNoise 50000.0 >> smithAngell 44100.0 880.0 10.0) |> play
+
+  // noise with resonator + adsr - the sound of, umm, hitting air?
+  ((modulate (whiteNoise 50000.0) adsr1) >> smithAngell 44100.0 880.0 10.0) 
+  |> play
+
+  // sound of waves using a low pass filter at 200Hz
+  (modulate (whiteNoise 50000.0) (lfo 0.05 0.8) ) 
+  >> lp 44100.0 220.0
+  |> playDuration 50.0
 
 let test() =
   testSinusoid()
