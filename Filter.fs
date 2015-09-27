@@ -91,3 +91,29 @@ module Filter =
     let a0 = 1.0 - sqrt b2
     let a2 = -a0
     filter [a0; 0.0; a2] [b1; b2]
+      
+  ///
+  /// <summary>First order single pole low pass filter</summary>
+  /// <param name="fs">sampling frequency</param>
+  /// <param name="fc">cutoff frequencey</param>
+  /// <returns>low pass filter function</returns>
+  ///
+  let lp fs fc =
+    let theta = 2.0 * System.Math.PI * fc / fs
+    let gamma = 2.0 - (cos theta)
+    let b1 = sqrt (gamma ** 2.0 - 1.0) - gamma
+    let a0 = 1.0 + b1
+    filter [a0] [b1]
+
+  ///
+  /// <summary>First order single pole high pass filter</summary>
+  /// <param name="fs">sampling frequency</param>
+  /// <param name="fc">cutoff frequencey</param>
+  /// <returns>high pass filter function</returns>
+  ///
+  let hp fs fc =
+    let theta = 2.0 * System.Math.PI * fc / fs
+    let gamma = 2.0 + (cos theta)
+    let b1 = gamma - sqrt (gamma ** 2.0 - 1.0)
+    let a0 = 1.0 - b1
+    filter [a0] [b1]
