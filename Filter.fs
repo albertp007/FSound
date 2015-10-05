@@ -100,9 +100,8 @@ module Filter =
   ///
   let lp fs fc =
     let theta = 2.0 * System.Math.PI * fc / fs
-    let gamma = 2.0 - (cos theta)
-    let b1 = sqrt (gamma ** 2.0 - 1.0) - gamma
-    let a0 = 1.0 + b1
+    let b1 = exp (-theta)
+    let a0 = 1.0 - b1
     filter [a0] [b1]
 
   ///
@@ -113,7 +112,10 @@ module Filter =
   ///
   let hp fs fc =
     let theta = 2.0 * System.Math.PI * fc / fs
-    let gamma = 2.0 + (cos theta)
-    let b1 = gamma - sqrt (gamma ** 2.0 - 1.0)
-    let a0 = 1.0 - b1
-    filter [a0] [b1]
+    let k = tan (theta/2.0)
+    let alpha = 1.0 + k
+    let a0 = 1.0
+    let a1 = -(1.0-k)/alpha
+    let b0 = 1.0/alpha
+    let b1 = -1.0/alpha
+    filter [b0; b1] [a1]
