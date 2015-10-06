@@ -182,7 +182,7 @@ module Signal =
   /// <returns>sequence of samples which is the summation of the original sample
   /// and the n-th sample before it</returns>
   let simpleDelay n g (initValue: float) =
-    let buffer = CircularBuffer<float>( n, initValue )
+    let buffer = CircularBuffer<float>( n, 0, initValue )
     fun sample -> 
       let res = sample + g * buffer.Get()
       buffer.Push( sample )

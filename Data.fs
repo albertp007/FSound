@@ -29,18 +29,36 @@ module Data =
   /// size of the array used as buffer</param>
   /// <param name="initValue">initial value to populate every slot of the
   /// array during initialization</param>
-  type CircularBuffer<'T> (n, initValue:'T) =
-    let window = Array.init n (fun i -> initValue)
+  type CircularBuffer<'T> (n, lag, initValue:'T) =
+    let buffer = Array.init n (fun i -> initValue)
     let size = n
-    let mutable current = 0
+    
+    let moveForward m current =
+      if m < 0 then failwith "m must be larger than or equal to zero"
+      (current + m) % size
+
+    let moveBackward m current =
+      if m < 0 then failwith "m must be larger than or equal to zero"
+      let pos = (current - m ) % size
+      if pos < 0 then pos + size else pos
+    
+    let mutable posW = 0
+    // read position lags behind write position by lag
+    let mutable posR = moveBackward lag posW
     let mutable numSlot = n
-    let moveIndex m = current <- (current + m) % size
-    do printfn "New instance of CircularBuffer"
+
+    let moveIndex m = 
+      posW <- moveForward m posW
+      posR <- moveForward m posR
+
+    /// do printfn "New instance of CircularBuffer"
+    do if lag < 0 then failwith "Lag must be larger than or equal to zero"
+
     ///
     /// <summary>Push an item into the circular buffer</summary>
     ///
     member t.Push item = 
-      window.[current] <- item
+      buffer.[posW] <- item
       moveIndex 1
       if numSlot > 0 then numSlot <- numSlot - 1
     ///
@@ -51,17 +69,34 @@ module Data =
     /// <summary>Get the value currently being pointed to and will be replaced
     /// by a call to push</summary>
     ///
-    member t.Get() = window.[current]
+    member t.Get() = buffer.[posR]
     ///
     /// <summary>Returns a copy of the buffer as an array</summary>
     ///
-    member t.GetBuffer() = window
+    member t.GetBuffer() = buffer
     ///
-    /// <summary>Returns the current index.  The item the current index is
-    /// pointing at will be returned by a call to Get() and will be replaced
-    /// with a new item by a call to Push()</summary>
+    /// <summary>Returns the current write index.  The item the current index is
+    /// pointing at will be replaced with a new item by a call to Push()
+    /// </summary>
     ///
-    member t.CurrentIndex() = current
+    member t.CurrentWrite() = posW
+    ///
+    /// <summary>Returns the current read index.  The item the current index is
+    /// pointing at will be returned by a call to Get()</summary>
+    ///
+    member t.CurrentRead() = posR
+    ///
+    /// <summary>Increase the spread between write index and read index
+    /// i.e. move the read index backwards</summary>
+    /// <param name="n">the number of items to move.  If n is positive, the
+    /// spread between read and write is increased, i.e. the read index is moved
+    /// backward from its current position.  Otherwise if n is negative, the
+    /// spread is decreased and the read index is moved forward to be closer to
+    /// the write index</param>
+    ///
+    member t.AddSpread n =
+      posR <- (if n > 0 then moveBackward n else moveForward n) posR
+
 
   /// <summary>Simple implementation of a moving window using .Net Queue<'T>
   /// </summary>
