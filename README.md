@@ -28,12 +28,23 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   triangle 10000.0 440.0 |> playWave 44100.0 2.0
   ```
 
-* Add an ADSR envelope
+* Add an ADSR envelope to the triangular wave above
   
   ```
   open FSound.Signal
   open FSound.Utilities
   (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) |> playWave 44100.0 1.0
+  ```
+
+* Add 200ms delay, 50/50 dry/wet and 0.15 feedback gain to the triangular wave with an ADSR envelope above
+
+  ```
+  open FSound.Signal
+  open FSound.Filter
+  open FSound.Utilities
+  (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) 
+  >> delay 44100.0 2.0 200.0 0.15 0.5
+  |> playWave 44100.0 1.0
   ```
 
 * Shaping white noise with a Smith-Angell resonator
