@@ -115,6 +115,11 @@ let funny() =
   >> lp 44100.0 220.0
   |> playDuration 50.0
 
+  // Vanilla delay effect
+  ((modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) 
+  >> delayLine 44100.0 2.0 200.0 0.15 0.4) 
+  |> playDuration 2.0;;
+
 let test() =
   testSinusoid()
   testSquare()

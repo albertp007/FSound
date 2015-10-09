@@ -100,8 +100,8 @@ module Filter =
   ///
   let lp fs fc =
     let theta = 2.0 * System.Math.PI * fc / fs
-    let b1 = exp (-theta)
-    let a0 = 1.0 - b1
+    let b1 = -exp (-theta)
+    let a0 = 1.0 + b1
     filter [a0] [b1]
 
   ///
@@ -119,3 +119,26 @@ module Filter =
     let b0 = 1.0/alpha
     let b1 = -1.0/alpha
     filter [b0; b1] [a1]
+
+  ///
+  /// <summary>Vanilla delay line implemented by circular buffer</summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec">Size of circular buffer in number of seconds
+  /// </param>
+  /// <param name="delay">Delay in number of milli-seconds</param>
+  /// <param name="feedback">Feedback multiplier</param>
+  /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
+  /// wet and dry samples</param>
+  /// <returns>Function which takes a sample and returns a response with delay
+  /// </returns>
+  ///
+  let delay fs bufferSec delayMs feedback wet =
+    if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
+    let bufferSize = int (fs * bufferSec)
+    let delaySamples = int (delayMs / 1000.0 * fs)
+    let buffer = CircularBuffer(bufferSize, delaySamples, 0.0)
+    fun sample ->
+      let yn = if delaySamples = 0 then sample else buffer.Get()
+      let xn = sample
+      buffer.Push (xn + feedback * yn)
+      wet * yn + (1.0 - wet) * sample

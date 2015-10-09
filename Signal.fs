@@ -171,23 +171,7 @@ module Signal =
           (sus_level, -sus_level/release_t, release_start )
       | _ -> (0.0, 0.0, release_end)
     (t - start_point)*slope + intercept
-
-  /// <summary>Delay a sequence of samples by N sample. Note that a
-  /// CircularBuffer object is created to keep track of historical samples
-  /// each time the function is instantiated!</summary>
-  /// <param name="n">The number of samples to delay</param>
-  /// <param name="g">Gain of the delayed sample</param>
-  /// <param name="initValue">Initial value of the windowing buffer before it is
-  /// fully populated</param>
-  /// <returns>sequence of samples which is the summation of the original sample
-  /// and the n-th sample before it</returns>
-  let simpleDelay n g (initValue: float) =
-    let buffer = CircularBuffer<float>( n, 0, initValue )
-    fun sample -> 
-      let res = sample + g * buffer.Get()
-      buffer.Push( sample )
-      res
-        
+       
   ///
   /// <summary>Hard-clips a sample</summary>
   /// <param name="level">the level the sample is going to be clipped at</param>
