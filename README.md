@@ -136,7 +136,7 @@ C:\Users\panga\project\fsharp\FSound>dir *.wav
                0 Dir(s)  30,879,870,976 bytes free
 ```
 ## Contributors
-
+Albert Pang (albert.pang@me.com)
 
 
 ## License
