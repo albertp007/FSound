@@ -13,10 +13,10 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.IO
   
-  saw 10000.0 440.0 
-  |> generate 44100.0 2.0 
-  |> floatTo16 
-  |> makeSoundFile 44100.0 1 16 true 
+  saw 10000.0 440.0
+  |> generate 44100.0 2.0
+  |> floatTo16
+  |> makeSoundFile 44100.0 1 16 true
   |> toWav @"blah.wav";;
   ```
 
@@ -35,7 +35,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Utilities
   
-  (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) |> playWave 44100.0 1.0
+  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  |> playWave 44100.0 1.0
   ```
 
 * Add 200ms delay, 50/50 dry/wet and 0.15 feedback gain to the triangular wave with an ADSR envelope above
@@ -45,7 +46,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Utilities
   
-  (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) 
+  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 44100.0 2.0 200.0 0.15 0.5
   |> playWave 44100.0 1.0
   ```
@@ -57,7 +58,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Utilities
   
-  (whiteNoise 50000.0 >> smithAngell 44100.0 440.0 10.0) |> playWave 44100.0 2.0
+  whiteNoise 50000.0 
+  >> smithAngell 44100.0 440.0 10.0
+  |> playWave 44100.0 2.0
   ```
 
 * Shaping white noise first with an ADSR envelope then a Smith-Angell resonator
@@ -67,7 +70,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Utilities
   
-  ((modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) >> smithAngell 44100.0 880.0 10.0) |> playWave 44100.0 2.0
+  modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> smithAngell 44100.0 880.0 10.0
+  |> playWave 44100.0 2.0
   ```
 
 * Generate white noise and pass through a high-pass filter
@@ -77,7 +82,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Utilities
   
-  (whiteNoise 10000.0 >> hp 44100.0 10000.0) |> playWave 44100.0 1.0
+  whiteNoise 10000.0 
+  >> hp 44100.0 10000.0
+  |> playWave 44100.0 1.0
   ```
   
 * Modulate amplitude of white noise with an LFO and pass through a low-pass filter - A crude simulation to the sound of waves
@@ -87,7 +94,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Utilities
   
-  (modulate (whiteNoise 10000.0) (lfo 0.05 0.8) ) >> lp 44100.0 220.0 |> playWave 44100.0 50.0
+  modulate (whiteNoise 10000.0) (lfo 0.05 0.8)
+  >> lp 44100.0 220.0
+  |> playWave 44100.0 50.0
   ```
   
 * Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz
@@ -97,7 +106,10 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter
   open FSound.Plot
   
-  (whiteNoise 10000.0 >> lp 44100.0 220.0) |> generate 44100.0 1.0 |> plotFreq 20000
+  whiteNoise 10000.0
+  >> lp 44100.0 220.0
+  |> generate 44100.0 1.0
+  |> plotFreq 20000
   ```
   
 ## Motivation
