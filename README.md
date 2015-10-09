@@ -25,6 +25,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   ```
   open FSound.Signal
   open FSound.Utilities
+  
   triangle 10000.0 440.0 |> playWave 44100.0 2.0
   ```
 
@@ -33,6 +34,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   ```
   open FSound.Signal
   open FSound.Utilities
+  
   (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) |> playWave 44100.0 1.0
   ```
 
@@ -42,6 +44,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Utilities
+  
   (modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) 
   >> delay 44100.0 2.0 200.0 0.15 0.5
   |> playWave 44100.0 1.0
@@ -53,6 +56,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Utilities
+  
   (whiteNoise 50000.0 >> smithAngell 44100.0 440.0 10.0) |> playWave 44100.0 2.0
   ```
 
@@ -62,6 +66,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Utilities
+  
   ((modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) >> smithAngell 44100.0 880.0 10.0) |> playWave 44100.0 2.0
   ```
 
@@ -71,6 +76,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Utilities
+  
   (whiteNoise 10000.0 >> hp 44100.0 10000.0) |> playWave 44100.0 1.0
   ```
   
@@ -80,6 +86,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Utilities
+  
   (modulate (whiteNoise 10000.0) (lfo 0.05 0.8) ) >> lp 44100.0 220.0 |> playWave 44100.0 50.0
   ```
   
@@ -89,6 +96,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal
   open FSound.Filter
   open FSound.Plot
+  
   (whiteNoise 10000.0 >> lp 44100.0 220.0) |> generate 44100.0 1.0 |> plotFreq 20000
   ```
   
