@@ -98,26 +98,31 @@ let funny() =
   let play = playDuration 2.0
   
   // a triangle wave with an adsr
-  (modulate (triangle 20000.0 2000.0) adsr1) |> play
+  modulate (triangle 20000.0 2000.0) adsr1 |> play
 
   // saw wave with smith angell resonator at 1024
-  (saw 20000.0 440.0 >> smithAngell 44100.0 1024.0 10.0) |> play
+  saw 20000.0 440.0
+  >> smithAngell 44100.0 1024.0 10.0
+  |> play
 
   // noise with resonator
-  (whiteNoise 50000.0 >> smithAngell 44100.0 880.0 10.0) |> play
+  whiteNoise 50000.0
+  >> smithAngell 44100.0 880.0 10.0
+  |> play
 
   // noise with resonator + adsr - the sound of, umm, hitting air?
-  ((modulate (whiteNoise 50000.0) adsr1) >> smithAngell 44100.0 880.0 10.0) 
+  modulate (whiteNoise 50000.0) adsr1
+  >> smithAngell 44100.0 880.0 10.0
   |> play
 
   // sound of waves using a low pass filter at 200Hz
-  (modulate (whiteNoise 50000.0) (lfo 0.05 0.8) ) 
+  modulate (whiteNoise 50000.0) (lfo 0.05 0.8) 
   >> lp 44100.0 220.0
   |> playDuration 50.0
 
   // Vanilla delay effect
-  ((modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)) 
-  >> delayLine 44100.0 2.0 200.0 0.15 0.4) 
+  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 44100.0 2.0 200.0 0.15 0.4
   |> playDuration 2.0;;
 
 let test() =

@@ -33,23 +33,20 @@ module Data =
     let buffer = Array.init n (fun i -> initValue)
     let size = n
     
-    let moveForward m current =
-      if m < 0 then failwith "m must be larger than or equal to zero"
-      (current + m) % size
-
-    let moveBackward m current =
-      if m < 0 then failwith "m must be larger than or equal to zero"
-      let pos = (current - m ) % size
-      if pos < 0 then pos + size else pos
-    
+    let calcPos m current =
+      let toPos = m + current
+      if toPos >= size then toPos % size 
+      else if toPos < 0 then (size + toPos % size)
+      else toPos
+   
     let mutable posW = 0
     // read position lags behind write position by lag
-    let mutable posR = moveBackward lag posW
+    let mutable posR = calcPos (-lag) posW
     let mutable numSlot = n
 
     let moveIndex m = 
-      posW <- moveForward m posW
-      posR <- moveForward m posR
+      posW <- calcPos m posW
+      posR <- calcPos m posR
 
     /// do printfn "New instance of CircularBuffer"
     do if lag < 0 then failwith "Lag must be larger than or equal to zero"
@@ -70,6 +67,11 @@ module Data =
     /// by a call to push</summary>
     ///
     member t.Get() = buffer.[posR]
+    ///
+    /// <summary>Get the value of the current read position offset by n
+    /// </summary>
+    ///
+    member t.GetOffset n = buffer.[(calcPos n posR)]
     ///
     /// <summary>Returns a copy of the buffer as an array</summary>
     ///
@@ -95,7 +97,7 @@ module Data =
     /// the write index</param>
     ///
     member t.AddSpread n =
-      posR <- (if n > 0 then moveBackward n else moveForward n) posR
+      posR <- calcPos n posR
 
 
   /// <summary>Simple implementation of a moving window using .Net Queue<'T>
