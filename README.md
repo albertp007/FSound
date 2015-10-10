@@ -50,6 +50,18 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   >> delay 44100.0 2.0 200.0 0.15 0.5
   |> playWave 44100.0 1.0
   ```
+  
+* The same as right above, except replace triangular wave with white noise to produce the sound of shuffling something
+
+  ```
+  open FSound.Signal
+  open FSound.Filter
+  open FSound.Utilities
+  
+  modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> delay 44100.0 2.0 200.0 0.15 0.5
+  |> playWave 44100.0 1.0
+  ```
 
 * Shaping white noise with a Smith-Angell resonator
 
