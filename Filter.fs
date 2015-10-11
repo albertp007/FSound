@@ -154,10 +154,15 @@ module Filter =
   let delay fs bufferSec delayMs feedback wet =
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
     let bufferSize = int (fs * bufferSec)
-    let delaySamples = int (delayMs / 1000.0 * fs)
-    let buffer = CircularBuffer(bufferSize, delaySamples, 0.0)
+    let delaySamples = delayMs / 1000.0 * fs
+    let delayNumSamples = int delaySamples
+    let fractionalDelay = delaySamples - float delayNumSamples
+    let buffer = CircularBuffer(bufferSize, delayNumSamples, 0.0)
     fun sample ->
-      let yn = if delaySamples = 0 then sample else buffer.Get()
+      let yn = 
+        if delayNumSamples = 0 && fractionalDelay = 0.0 then sample 
+        else cubicInterpolate (buffer.GetOffset 0) (buffer.Get()) 
+               (buffer.GetOffset 1) (buffer.GetOffset 2) fractionalDelay
       let xn = sample
       buffer.Push (xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
