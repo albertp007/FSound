@@ -121,6 +121,25 @@ module Filter =
     filter [b0; b1] [a1]
 
   ///
+  /// <summary>Cubic interpolation between t=0 and t=1</summary>
+  /// <param name="yMinus1">y(-1)</param>
+  /// <param name="y0">y0</param>
+  /// <param name="y1">y1</param>
+  /// <param name="y2">y2</param>
+  /// <param name="dx">x - x0 but x <= x1</param>
+  /// <returns>Intepolated value of x which is equal to x0 + dx</returns>
+  ///
+  let cubicInterpolate yMinus1 y0 y1 y2 (dt:float) =
+    if dt < 0.0 || dt > 1.0 then failwith "dt must be between 0.0 and 1.0"
+    let c0 = y0
+    let c1 = y1 - yMinus1
+    let c2 = yMinus1 - y0 - c0
+    let c3 = -yMinus1 + y0 - y1 + y2
+    let dtSq = dt * dt
+    let dtCube = dtSq * dt
+    c3*dtCube + c2*dtSq + c1*dt + c0
+     
+  ///
   /// <summary>Vanilla delay line implemented by circular buffer</summary>
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="bufferSec">Size of circular buffer in number of seconds
