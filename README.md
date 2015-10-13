@@ -133,8 +133,20 @@ Sound.
 
 ## Installation
 
-Simply download the project and load it in visual studio 2015 with F# component
-installed (At the moment, VS 2015 installs F# 4.0) and build it. 
+Simply download the project and load it in visual studio 2015.
+
+If your version of Visual Studio does not have F#,  you may 
+install the free Visual Studio 2015 Community Edition. 
+The Visual F# Tools are installed automatically when you first 
+create or open an F# project. See: http://fsharp.org/use/windows/
+
+This project requires you to install the NAudio package. 
+To do this with Nu-Get in VS:
+1. Right click References in Solution Explorer 
+2. Click Manage Nu-Get packages
+3. Search for NAudio
+4. Uninstall then Install NAudio
+
 
 ## Tests
 
