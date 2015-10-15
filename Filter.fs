@@ -25,6 +25,7 @@ module Filter =
   open MathNet.Numerics.LinearAlgebra.Double
   open FSound.Data
   open FSound.IO
+  open FSound.Signal
 
   ///
   /// <summary>Filter with feedforward and feedback coefficients
@@ -144,7 +145,7 @@ module Filter =
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="bufferSec">Size of circular buffer in number of seconds
   /// </param>
-  /// <param name="delay">Delay in number of milli-seconds</param>
+  /// <param name="delayMs">Delay in number of milli-seconds</param>
   /// <param name="feedback">Feedback multiplier</param>
   /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
   /// wet and dry samples</param>
@@ -161,8 +162,72 @@ module Filter =
     fun sample ->
       let yn = 
         if delayNumSamples = 0 && fractionalDelay = 0.0 then sample 
-        else cubicInterpolate (buffer.GetOffset 0) (buffer.Get()) 
+        else cubicInterpolate (buffer.GetOffset -1) (buffer.Get()) 
                (buffer.GetOffset 1) (buffer.GetOffset 2) fractionalDelay
       let xn = sample
       buffer.Push (xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
+
+  ///
+  /// <summary>Delay line with the number of delayed samples "modulatable" by
+  /// an LFO</summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec">Size of circular buffer in number of seconds
+  /// </param>
+  /// <param name="delayMs">Delay in number of milli-seconds</param>
+  /// <param name="feedback">Feedback multiplier</param>
+  /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
+  /// wet and dry samples</param>
+  /// <param name="lfo">Function that takes time t and return a value</param>
+  /// <returns>Function which takes a sample and returns a response with delay
+  /// </returns>
+  ///
+  let mod_delay fs bufferSec delayMs feedback wet lfo =
+    if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
+    if bufferSec * 1000.0 < delayMs then failwith "buffer size not large enough"
+    let bufferSize = int (fs * bufferSec)
+    let delaySamples = delayMs / 1000.0 * fs
+    let delayNumSamples = int delaySamples
+    let buffer = CircularBuffer(bufferSize, 0, 0.0)
+    let mutable n = 0
+    fun sample ->
+      n <- n + 1
+      let t = (float n)/fs
+      let d = (lfo t) * delaySamples
+      let d' = ceil d
+      let frac = d' - d
+      buffer.SetLag (int d')
+      // TODO: fractional delay handling
+      let yn = if abs d < 0.0000001 then sample else buffer.Get()
+      let xn = sample
+      buffer.Push (xn + feedback * yn)
+      wet * yn + (1.0 - wet) * sample
+
+  ///
+  /// <summary>Flanger</summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="maxDelayMs">maximum delay in milliseconds</param>
+  /// <param name="feedback">feedback gain</param>
+  /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
+  /// wet and dry samples</param>
+  /// <param name="sweepFreq">the frequency of the LFO which modulate the number
+  /// of delayed samples from 0 to the maxDelayMs</param>
+  /// <returns>Function which takes a sample and returns a sample which makes
+  /// up the sequence of samples of the flanger effect</returns>
+  ///
+  let flanger fs maxDelayMs feedback wet sweepFreq =
+    let bufferSec = maxDelayMs / 1000.0 * 2.0
+    mod_delay fs bufferSec maxDelayMs feedback wet (lfo sweepFreq 0.0 1.0)
+
+  ///
+  /// <summary>Vibrato</summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="maxDelayMs">maximum delay in milliseconds</param>
+  /// <param name="sweepFreq">the frequency of the LFO which modulate the number
+  /// of delayed samples from 0 to the maxDelayMs</param>
+  /// <returns>Function which takes a sample and returns a sample which makes
+  /// up the sequence of samples of the vibrato effect</returns>
+  ///
+  let vibrato fs maxDelayMs sweepFreq =
+    let bufferSec = maxDelayMs / 1000.0 * 2.0
+    mod_delay fs bufferSec maxDelayMs 0.0 1.0 (lfo sweepFreq 0.0 1.0)

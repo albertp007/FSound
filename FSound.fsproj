@@ -54,8 +54,8 @@
     <Compile Include="Data.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="Play.fs" />
-    <Compile Include="Filter.fs" />
     <Compile Include="Signal.fs" />
+    <Compile Include="Filter.fs" />
     <Compile Include="Utilities.fs" />
     <Compile Include="Plot.fs" />
     <Content Include="packages.config" />
