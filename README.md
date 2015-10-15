@@ -124,6 +124,40 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   |> plotFreq 20000
   ```
   
+* Vibrato on a triangular wave
+  
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  triangle 10000.0 440.0 
+  >> vibrato 44100.0 7.0 2.0 
+  |> playWave 44100.0 5.0
+  ```
+  
+* Flanging on saw wave
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  saw 10000.0 440.0
+  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  |> playWave 44100.0 10.0
+  ```
+
+
+* Flanging on white noise
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  whiteNoise 10000.0
+  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  |> playWave 44100.0 10.0
+  ```
+  
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#
