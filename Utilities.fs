@@ -25,6 +25,7 @@ module Utilities =
   open MathNet.Numerics.IntegralTransforms
   open FSound.IO
   open FSound.Signal
+  open FSound.Filter
   open FSound.Play
 
   ///
@@ -147,3 +148,28 @@ module Utilities =
     |> floatTo16
     |> makeSoundFile sf 1 16 true
     |> playSoundFile
+
+  ///
+  /// <summary>Implements a very crude model of the sound of waves by modulating
+  /// white noise waveform with a LFO</summary>
+  /// <param name="a">amplitude</param>
+  /// <param name="f">LFO frequency</param>
+  /// <param name="sf">sampling frequency</param>
+  /// <param name="tau">duration of the samples to be generated</param>
+  /// <returns>Sequence of samples</returns>
+  ///
+  let waveGenerator sf tau =
+    // let delay = simpleDelay 1 0.0
+    let comb = filter [1.0; 0.0; 0.0; 0.5**3.0] [0.0; 0.0; 0.0; 0.0; 0.9**5.0]
+    let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.0 0.8 t)
+    wf >> comb
+    |> generate sf tau
+
+  ///
+  /// <summary>Wind simulator</summary>
+  /// <param name="a">amplitude</param>
+  /// <returns>function returning the value of the sample at time t</returns>
+  ///
+  let windSimulator a =
+    ((modulate (whiteNoise 20000.0) (lfo 0.05 0.0 0.8)) 
+    >> smithAngell 44100.0 880.0 10.0)

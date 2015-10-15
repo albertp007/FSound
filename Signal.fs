@@ -25,7 +25,6 @@ module Signal =
   open MathNet.Numerics.LinearAlgebra.Double
   open FSound.Data
   open FSound.IO
-  open FSound.Filter
 
   let private random = System.Random()
 
@@ -137,8 +136,10 @@ module Signal =
   /// signal to go to zero</param>
   /// <param name="t">time in seconds</param>
   /// <returns>value of the lfo at time t</returns>
-  let lfo f depth t =
-    ((sinusoid 1.0 f 0.0 t) + 1.0) * 0.5 * depth + (1.0 - depth)
+  let lfo f phase depth t =
+    // short circuit for depth = 0.0
+    if depth = 0.0 then 1.0 else
+      ((sinusoid 1.0 f phase t) + 1.0) * 0.5 * depth + (1.0 - depth)
 
   ///
   /// <summary>ADSR envelope</summary>
@@ -204,22 +205,6 @@ module Signal =
     whiteNoise a |> generate sf tau
 
   ///
-  /// <summary>Implements a very crude model of the sound of waves by modulating
-  /// white noise waveform with a LFO</summary>
-  /// <param name="a">amplitude</param>
-  /// <param name="f">LFO frequency</param>
-  /// <param name="sf">sampling frequency</param>
-  /// <param name="tau">duration of the samples to be generated</param>
-  /// <returns>Sequence of samples</returns>
-  ///
-  let waveGenerator sf tau =
-    // let delay = simpleDelay 1 0.0
-    let comb = filter [1.0; 0.0; 0.0; 0.5**3.0] [0.0; 0.0; 0.0; 0.0; 0.9**5.0]
-    let wf t = (whiteNoise 10000.0 t) * (lfo 0.05 0.8 t)
-    wf >> comb
-    |> generate sf tau
-
-  ///
   /// <summary>Convenience function which combines square waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
@@ -254,12 +239,3 @@ module Signal =
   ///
   let triangleGenerator a f sf tau =
     triangle a f |> generate sf tau
-
-  ///
-  /// <summary>Wind simulator</summary>
-  /// <param name="a">amplitude</param>
-  /// <returns>function returning the value of the sample at time t</returns>
-  ///
-  let windSimulator a =
-    ((modulate (whiteNoise 20000.0) (lfo 0.05 0.8)) 
-    >> smithAngell 44100.0 880.0 10.0)
