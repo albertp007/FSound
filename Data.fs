@@ -96,9 +96,15 @@ module Data =
     /// spread is decreased and the read index is moved forward to be closer to
     /// the write index</param>
     ///
-    member t.AddSpread n =
+    member t.AddLag n =
       posR <- calcPos n posR
 
+    ///
+    /// <summary>Set the lag in terms of number of samples between the read 
+    /// index and the write index</summary>
+    ///
+    member t.SetLag n =
+      posR <- calcPos -(abs n) posW 
 
   /// <summary>Simple implementation of a moving window using .Net Queue<'T>
   /// </summary>
