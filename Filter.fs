@@ -187,18 +187,21 @@ module Filter =
     if bufferSec * 1000.0 < delayMs then failwith "buffer size not large enough"
     let bufferSize = int (fs * bufferSec)
     let delaySamples = delayMs / 1000.0 * fs
-    let delayNumSamples = int delaySamples
     let buffer = CircularBuffer(bufferSize, 0, 0.0)
     let mutable n = 0
     fun sample ->
       n <- n + 1
       let t = (float n)/fs
-      let d = (lfo t) * delaySamples
+      // Add an extra one sample to the delay to make sure there is one sample 
+      // ahead for linear interpolation
+      let d = (lfo t) * delaySamples + 1.0
       let d' = ceil d
       let frac = d' - d
       buffer.SetLag (int d')
-      // TODO: fractional delay handling
-      let yn = if abs d < 0.0000001 then sample else buffer.Get()
+      // printfn "frac: %f d: %f d': %f x0: %f x1: %f v: %f" frac d d' (buffer.Get() )
+      //  (buffer.GetOffset 1) (buffer.Get() * (1.0 - frac) + (buffer.GetOffset 1) * frac)
+      let yn = if abs (d - 1.0) < 0.0000001 then sample else 
+                 buffer.Get() * (1.0 - frac) + (buffer.GetOffset 1) * frac
       let xn = sample
       buffer.Push (xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
@@ -217,7 +220,8 @@ module Filter =
   ///
   let flanger fs maxDelayMs feedback wet sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs feedback wet (lfo sweepFreq 0.0 1.0)
+    mod_delay fs bufferSec maxDelayMs feedback wet 
+      (lfo sweepFreq System.Math.PI 1.0)
 
   ///
   /// <summary>Vibrato</summary>
@@ -230,4 +234,4 @@ module Filter =
   ///
   let vibrato fs maxDelayMs sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 0.0 1.0 (lfo sweepFreq 0.0 1.0)
+    mod_delay fs bufferSec maxDelayMs 0.0 1.0 (lfo sweepFreq System.Math.PI 1.0)
