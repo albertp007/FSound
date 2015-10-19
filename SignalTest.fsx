@@ -125,6 +125,20 @@ let funny() =
   >> delay 44100.0 2.0 200.0 0.15 0.4
   |> playDuration 2.0;;
 
+  /// Chorus effect - the delay params taken from William Sharkey's Interior
+  /// Sounds [https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play]
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
+    (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 44100.0 2.0 200.0 0.9 0.5
+  |> playDuration 2.0;;
+
+  /// Same as the chorus effect above but with a typo in the sampling frequency
+  /// in the delay and it turns out to sound completely different
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
+    (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 0.9 0.5
+  |> playDuration 2.0;;
+
 let test() =
   testSinusoid()
   testSquare()

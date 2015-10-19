@@ -227,11 +227,25 @@ module Filter =
   /// <summary>Vibrato</summary>
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="maxDelayMs">maximum delay in milliseconds</param>
-  /// <param name="sweepFreq">the frequency of the LFO which modulate the number
-  /// of delayed samples from 0 to the maxDelayMs</param>
+  /// <param name="sweepFreq">the frequency of the LFO which modulates the 
+  /// number of delayed samples from 0 to the maxDelayMs</param>
   /// <returns>Function which takes a sample and returns a sample which makes
   /// up the sequence of samples of the vibrato effect</returns>
   ///
   let vibrato fs maxDelayMs sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
     mod_delay fs bufferSec maxDelayMs 0.0 1.0 (lfo sweepFreq System.Math.PI 1.0)
+
+  ///
+  /// <summary>Chorus - largely the same as the vibrato except that the lfo
+  /// starts in the mid-point between 0 and max delay</summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="sweepFreq">the frequency of the LFO which modulates the
+  /// number of delayed samples from 0 to maxDelayMs</param>
+  /// <returns>Function which takes a sample and returns a sample which makes
+  /// up the sequence of samples of the chorus effect</returns>
+  /// 
+  let chorus fs maxDelayMs wet sweepFreq =
+    let bufferSec = maxDelayMs / 1000.0 * 2.0
+    mod_delay fs bufferSec maxDelayMs 0.0 wet 
+      (lfo sweepFreq (System.Math.PI/2.0) 1.0)
