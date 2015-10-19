@@ -39,8 +39,7 @@ module Signal =
   /// </returns>
   ///
   let generate sf tau waveFunc =
-    let t = seq [0.0..(1.0/sf)..tau]
-    Seq.map waveFunc t
+    seq { for t in 0.0..(1.0/sf)..tau -> waveFunc t }
 
   ///
   /// <summary>Sinusoid waveform function</summary>
