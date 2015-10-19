@@ -10,8 +10,8 @@ Here are some of the things you can do with FSound:
 sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   
   ```
-  open FSound.Signal
-  open FSound.IO
+  open FSound.Signal;;
+  open FSound.IO;;
   
   saw 10000.0 440.0
   |> generate 44100.0 2.0
@@ -23,108 +23,108 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
 * Play a triangular wave of amplitude 10000, 440Hz, sampling rate 44100Hz, 1 channel and which lasts for 2 seconds
   
   ```
-  open FSound.Signal
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Utilities;;
   
-  triangle 10000.0 440.0 |> playWave 44100.0 2.0
+  triangle 10000.0 440.0 |> playWave 44100.0 2.0;;
   ```
 
 * Add an ADSR envelope to the triangular wave above
   
   ```
-  open FSound.Signal
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Utilities;;
   
   modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  |> playWave 44100.0 1.0
+  |> playWave 44100.0 1.0;;
   ```
 
 * Add 200ms delay, 50/50 dry/wet and 0.15 feedback gain to the triangular wave with an ADSR envelope above
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 44100.0 2.0 200.0 0.15 0.5
-  |> playWave 44100.0 1.0
+  |> playWave 44100.0 1.0;;
   ```
   
 * The same as right above, except replace triangular wave with white noise to produce the sound of shuffling something
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 44100.0 2.0 200.0 0.15 0.5
-  |> playWave 44100.0 1.0
+  |> playWave 44100.0 1.0;;
   ```
 
 * Shaping white noise with a Smith-Angell resonator
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   whiteNoise 50000.0 
   >> smithAngell 44100.0 440.0 10.0
-  |> playWave 44100.0 2.0
+  |> playWave 44100.0 2.0;;
   ```
 
 * Shaping white noise first with an ADSR envelope then a Smith-Angell resonator
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> smithAngell 44100.0 880.0 10.0
-  |> playWave 44100.0 2.0
+  |> playWave 44100.0 2.0;;
   ```
 
 * Generate white noise and pass through a high-pass filter
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   whiteNoise 10000.0 
   >> hp 44100.0 10000.0
-  |> playWave 44100.0 1.0
+  |> playWave 44100.0 1.0;;
   ```
   
 * Modulate amplitude of white noise with an LFO and pass through a low-pass filter - A crude simulation to the sound of waves
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Utilities
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
   
   modulate (whiteNoise 10000.0) (lfo 0.05 0.8)
   >> lp 44100.0 220.0
-  |> playWave 44100.0 50.0
+  |> playWave 44100.0 50.0;;
   ```
   
 * Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz
 
   ```
-  open FSound.Signal
-  open FSound.Filter
-  open FSound.Plot
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Plot;;
   
   whiteNoise 10000.0
   >> lp 44100.0 220.0
   |> generate 44100.0 1.0
-  |> plotFreq 20000
+  |> plotFreq 20000;;
   ```
   
-* Vibrato on a triangular wave
+* Vibrato on a triangular wave (7.0 ms max delay, 2Hz LFO)
   
   ```
   open FSound.Signal;;
@@ -132,10 +132,10 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Utilities;;
   triangle 10000.0 440.0 
   >> vibrato 44100.0 7.0 2.0 
-  |> playWave 44100.0 5.0
+  |> playWave 44100.0 5.0;;
   ```
   
-* Flanging on saw wave
+* Flanging on saw wave (7.0 ms max delay, 0.15 feedback, 0.5 wet/dry, 0.2Hz LFO)
 
   ```
   open FSound.Signal;;
@@ -146,7 +146,6 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   |> playWave 44100.0 10.0
   ```
 
-
 * Flanging on white noise
 
   ```
@@ -155,7 +154,29 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Utilities;;
   whiteNoise 10000.0
   >> flanger 44100.0 7.0 0.15 0.5 0.2
-  |> playWave 44100.0 10.0
+  |> playWave 44100.0 10.0;;
+  ```
+  
+* Chorus effect (44100Hz sampling frequency, 30ms max delay, 0.4 wet/dry, 1.5Hz LFO) on a square wave with an adsr envelope and delay (The delay params are taken from William Sharkey's Interior Sounds (https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 44100.0 2.0 200.0 0.9 0.5
+  |> playWave 44100.0 10.0;;
+  ```
+  
+* Chorus effect like the above but with a typo in the sampling frequency in the delay (this typo is beautiful, sort of)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 0.9 0.5
+  |> playWave 44100.0 2.0;;  
   ```
   
 ## Motivation
