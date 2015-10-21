@@ -104,6 +104,44 @@ module IO =
       (Raw (reader.ReadBytes(nBytes))))
 
   ///
+  /// <summary>Private helper function which writes the header of a wav file
+  /// to a file stream via BinaryWriter</summary>
+  /// <param name="samplingRate">Sampling rate in Hz</param>
+  /// <param name="numChannels">Number of channels</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="numBytes">Total number of sample bytes written. This should
+  /// be equal to number of samples times bytesPerSample * numChannels</param>
+  /// <returns>unit</returns>
+  ///
+  let private writeWavHeader samplingRate numChannels bytesPerSample 
+    numBytes (writer:System.IO.BinaryWriter) =
+    let chunkID = "RIFF"B
+    let chunkSize = 36 + numBytes   // * seek and update after numBytes is known
+    let format = "WAVE"B
+    let subChunk1ID = "fmt "B
+    let subChunk1Size = 16
+    let audioFormat = 1s            // only support PCM at the moment
+    let nc = int16 numChannels
+    let bitsPerSample = int16 (bytesPerSample*8)
+    let blockAlign = int16 (numChannels * bytesPerSample)
+    let byteRate = samplingRate * numChannels * bytesPerSample
+    let subChunk2Id = "data"B
+    let subChunk2Size = numBytes    // * seek and update after numBytes is known
+    writer.Write(chunkID)           // 0
+    writer.Write(chunkSize)         // 4 (*)
+    writer.Write(format)            // 8
+    writer.Write(subChunk1ID)       // 12
+    writer.Write(subChunk1Size)     // 16
+    writer.Write(audioFormat)       // 20
+    writer.Write(nc)                // 22
+    writer.Write(samplingRate:int)  // 24
+    writer.Write(byteRate)          // 28
+    writer.Write(blockAlign)        // 32
+    writer.Write(bitsPerSample)     // 34
+    writer.Write(subChunk2Id)       // 36
+    writer.Write(subChunk2Size)     // 40 (*)
+
+  ///
   /// <summary>Writes raw data and associated properties to a PCM wav file
   /// </summary>
   /// <param name="path">path of the wav file.  Caution: if the file already
@@ -115,34 +153,9 @@ module IO =
   /// <returns>unit</returns>
   ///
   let private writeWavFile path (sf, nc, bps, samples: Samples) =
-    let chunkID = "RIFF"B
-    let chunkSize = 36 + samples.NumBytes
-    let format = "WAVE"B
-    let subChunk1ID = "fmt "B
-    let subChunk1Size = 16
-    let audioFormat = 1s // only support PCM at the moment
-    let numChannels = int16 nc
-    let samplingRate = sf
-    let bitsPerSample = int16 bps
-    let blockAlign = int16 (nc * bps  / 8)
-    let byteRate = samplingRate * nc * bps /8
-    let subChunk2Id = "data"B
-    let subChunk2Size = samples.NumBytes
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
-    writer.Write(chunkID)
-    writer.Write(chunkSize)
-    writer.Write(format)
-    writer.Write(subChunk1ID)
-    writer.Write(subChunk1Size)
-    writer.Write(audioFormat)
-    writer.Write(numChannels)
-    writer.Write(samplingRate:int)
-    writer.Write(byteRate)
-    writer.Write(blockAlign)
-    writer.Write(bitsPerSample)
-    writer.Write(subChunk2Id)
-    writer.Write(subChunk2Size)
+    writeWavHeader sf nc (int bps/8) samples.NumBytes writer
     match samples with
     | Raw bs -> writer.Write(bs)
     | Bit8 bs -> bs |> Array.iter writer.Write 
@@ -268,8 +281,44 @@ module IO =
   /// <returns>A sequence of (unsigned) bytes of length specified in byteDepth
   /// </returns>
   ///
-  let pack byteDepth sample =
+  let pack byteDepth proc sample =
     if abs byteDepth > 8 then failwith "Depth larger than 8 bytes not supported"
     let clipped = int64 (clip byteDepth sample)
-    seq { for i in 0..(byteDepth-1) do 
-            yield byte (clipped >>> (i * 8) &&& (int64 0xFF)) }
+    for i in 0..(byteDepth-1) do 
+      proc (byte (clipped >>> (i * 8) &&& (int64 0xFF)))
+
+  ///
+  /// <summary>Stream a sequence of samples to a wave file.  This function
+  /// iterates through the sample sequence and thus will evaulate it in its
+  /// entirety after it is done.  However, as and after each sample in the 
+  /// sequence is evaluated, it is converted to bytes and written to file
+  /// and thus will avoid the memory overhead of first converting the whole
+  /// sequence to an array if a SoundFile object is used instead.  If the raw
+  /// sample value falls out of the range of the byteDepth, it will be clipped.
+  /// For long sequence of samples e.g. a mix down, this function should be 
+  /// preferred over using the SoundFile object.  Note however, the sequence 
+  /// itself still occupies memory after evaluation completes</summary>
+  /// <param name="samplingRate">Sampling rate in Hz</param>
+  /// <param name="numChannels">Number of channels - currently only one is
+  /// supported</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="path">Path of the wav file to be created.  N.B. Any existing
+  /// file is overwritten!</param>
+  /// <param name="samples">Sequence of samples</param>
+  /// <returns>unit</returns>
+  ///
+  let streamToWav samplingRate numChannels bytesPerSample path
+    (samples:seq<float>) =
+    use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
+    use writer = new System.IO.BinaryWriter(fileStream)
+    let proc (b:byte) = writer.Write(b)
+    // write header
+    writeWavHeader samplingRate numChannels bytesPerSample 0 writer
+    // pack and write the stream
+    Seq.iter (pack bytesPerSample proc) samples
+    // now we should know the number of bytes
+    let numBytes = Seq.length samples * bytesPerSample
+    fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
+    writer.Write(36+numBytes)
+    fileStream.Seek(32L, SeekOrigin.Current) |> ignore
+    writer.Write(numBytes)
