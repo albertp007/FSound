@@ -177,8 +177,9 @@ module Signal =
   /// <param name="level">the level the sample is going to be clipped at</param>
   /// <returns>the value of the sample after clipping
   ///
-  let clip level (s:float) =
-    if s > level then level else s
+  let clipper level (s:float) =
+    let l' = abs level
+    min (max -l' s) l'
 
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>

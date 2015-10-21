@@ -87,7 +87,7 @@ let testRead() =
   ( w1.Channels.[0] |> Seq.toArray ) = (w1.Channels.[0] |> Seq.toArray )
 
 let testClip() =
-  testWaveform (sinusoid 20000.0 256.0 0.0 >> FSound.Signal.clip 16000.0 
+  testWaveform (sinusoid 20000.0 256.0 0.0 >> clipper 16000.0 
                 |> generate 44100.0 5.0) @"clip.wav"
 
 let funny() =
