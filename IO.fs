@@ -243,4 +243,33 @@ module IO =
   ///
   let makeSoundFile samplingRate numChannels bitDepth isPCM rawData =
     SoundFile(samplingRate, numChannels, bitDepth, isPCM, rawData)
-    
+   
+  ///
+  /// <summary>Clip a sample in float to fit the range of the specified depth
+  /// in number of bytes</summary>
+  /// <param name="byteDepth">bit depth but in number of bytes</param>
+  /// <param name="sample">the sample value which is a float</param>
+  /// <returns>clipped sample value that fits in the range of the number of
+  /// bytes</returns>
+  ///
+  let clip byteDepth sample =   
+    let range = 2.0**(float (abs byteDepth) * 8.0)
+    let minValue = -range/2.0
+    let maxValue = range/2.0 - 1.0
+    min (max minValue sample) maxValue
+
+  ///
+  /// <summary>Pack a sample in float to the number of bytes specified. Only
+  /// support up to 8 bytes</summary>
+  /// <param name="byteDepth">number of bytes to fit the sample in. Any sample
+  /// falling outside of the range supported by the specified number of bytes
+  /// is clipped</param>
+  /// <param name="sample">the sample value which is a float</param>
+  /// <returns>A sequence of (unsigned) bytes of length specified in byteDepth
+  /// </returns>
+  ///
+  let pack byteDepth sample =
+    if abs byteDepth > 8 then failwith "Depth larger than 8 bytes not supported"
+    let clipped = int64 (clip byteDepth sample)
+    seq { for i in 0..(byteDepth-1) do 
+            yield byte (clipped >>> (i * 8) &&& (int64 0xFF)) }
