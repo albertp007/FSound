@@ -179,6 +179,18 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   |> playWave 44100.0 2.0;;  
   ```
   
+* Streaming a sequence of samples to a wav file as the sample is being evaluated.
+
+  ```
+  open FSound.IO;;
+  open FSound.Signal;;
+  open FSound.Filter;;
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 0.9 0.5 
+  |> generate 44100.0 2.0 
+  |> streamToWav 44100 1 2 @"C:\Users\panga\project\FSound\blah.wav";;
+  ```
+  
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#
