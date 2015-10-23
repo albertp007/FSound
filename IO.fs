@@ -294,14 +294,14 @@ module IO =
   /// <returns>A sequence of a list of elements of type in the sequences being
   /// zipped</returns>
   ///
-  let zipSeq (lstSequences:seq<seq<'a>>) = 
+  let zipSeq (lstSequences:list<seq<'a>>) = 
     let enumerators = lstSequences 
-                      |> Seq.map (fun (s:seq<'a>) -> (s.GetEnumerator()))
+                      |> List.map (fun (s:seq<'a>) -> (s.GetEnumerator()))
     seq {
       let hasNext() = enumerators 
-                      |> Seq.exists (fun e -> not (e.MoveNext())) |> not
+                      |> List.exists (fun e -> not (e.MoveNext())) |> not
       while hasNext() do
-        yield enumerators |> Seq.map (fun e -> e.Current)
+        yield enumerators |> List.map (fun e -> e.Current)
     }
 
   ///
