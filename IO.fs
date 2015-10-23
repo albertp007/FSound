@@ -288,10 +288,28 @@ module IO =
       proc (byte (clipped >>> (i * 8) &&& (int64 0xFF)))
 
   ///
-  /// <summary>Stream a sequence of samples to a wave file.  This function
-  /// iterates through the sample sequence and thus will evaulate it in its
-  /// entirety after it is done.  However, as and after each sample in the 
-  /// sequence is evaluated, it is converted to bytes and written to file
+  /// <summary>Zip a list of sequence from http://fssnip.net/kz by Samuel Bosch
+  /// </summary>
+  /// <param name="lstSequences">the list of sequences to be zipped</param>
+  /// <returns>A sequence of a list of elements of type in the sequences being
+  /// zipped</returns>
+  ///
+  let zipSeq (lstSequences:seq<seq<'a>>) = 
+    let enumerators = lstSequences 
+                      |> Seq.map (fun (s:seq<'a>) -> (s.GetEnumerator()))
+    seq {
+      let hasNext() = enumerators 
+                      |> Seq.exists (fun e -> not (e.MoveNext())) |> not
+      while hasNext() do
+        yield enumerators |> Seq.map (fun e -> e.Current)
+    }
+
+  ///
+  /// <summary>Stream a list of sequence of samples to a wave file.  Each
+  /// sequence in the list represents one channel.  This function iterates
+  /// through each of the sample sequence and thus will evaulate them in their
+  /// entirety after it is done.  However, as and after each sample in each 
+  /// channel is evaluated, it is converted to bytes and written to file
   /// and thus will avoid the memory overhead of first converting the whole
   /// sequence to an array if a SoundFile object is used instead.  If the raw
   /// sample value falls out of the range of the byteDepth, it will be clipped.
@@ -299,25 +317,28 @@ module IO =
   /// preferred over using the SoundFile object.  Note however, the sequence 
   /// itself still occupies memory after evaluation completes</summary>
   /// <param name="samplingRate">Sampling rate in Hz</param>
-  /// <param name="numChannels">Number of channels - currently only one is
-  /// supported</param>
   /// <param name="bytesPerSample">Bit depth in number of bytes</param>
   /// <param name="path">Path of the wav file to be created.  N.B. Any existing
   /// file is overwritten!</param>
-  /// <param name="samples">Sequence of samples</param>
+  /// <param name="samples">Sequence of sequence of samples. Each inner
+  /// sequence represents one channel</param>
   /// <returns>unit</returns>
   ///
-  let streamToWav samplingRate numChannels bytesPerSample path
-    (samples:seq<float>) =
+  let streamToWav samplingRate bytesPerSample path channels =
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
+    let mutable numSamples = 0
     let proc (b:byte) = writer.Write(b)
+    let packChannels samples =
+      Seq.iter (pack bytesPerSample proc) samples
+      numSamples <- numSamples + 1
+    let numChannels = Seq.length channels
     // write header
     writeWavHeader samplingRate numChannels bytesPerSample 0 writer
     // pack and write the stream
-    Seq.iter (pack bytesPerSample proc) samples
+    Seq.iter packChannels (zipSeq channels)
     // now we should know the number of bytes
-    let numBytes = Seq.length samples * bytesPerSample
+    let numBytes = numSamples * bytesPerSample * numChannels
     fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
     writer.Write(36+numBytes)
     fileStream.Seek(32L, SeekOrigin.Current) |> ignore
