@@ -270,8 +270,6 @@ C:\Users\panga\project\fsharp\FSound>dir *.wav
 ## Contributors
 Albert Pang (albert.pang@me.com)
 
-## Showcase
-William Sharkey's compositions (https://github.com/williamsharkey/William-FSound-Songs)
 
 ## License
 
