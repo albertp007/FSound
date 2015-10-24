@@ -200,6 +200,16 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   |> List.map (generate 44100.0 5.0) 
   |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
   ```
+
+* A  more memory-efficient version of function to stream two sequences of samples as left and right channel to a wav file
+
+  ```
+  open FSound.IO;;
+  open FSound.Signal;;
+  (sinusoid 10000.0 440.0 0.0, sinusoid 10000.0 445.0 0.0)
+  |> pairMap (generate 44100.0 5.0) 
+  |> streamToWavLR 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
+  ```
   
 ## Motivation
 
