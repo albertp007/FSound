@@ -46,57 +46,12 @@ module Play =
     worker.RunWorkerAsync()
 
   ///
-  /// <summary>Play a Samples type using NAudio as a background job</summary>
-  /// <param name="sampleRate">sampling rate</param>
-  /// <param name="bitDepth">Bits per sample</param>
-  /// <param name="nChannel">number of channels</param>
-  /// <returns>unit</returns>
-  ///
-  let play2 sampleRate byteDepth channels =
-    use ms1 = new MemoryStream()
-    use writer = new System.IO.BinaryWriter(ms1)
-    let nChannel = Seq.length channels
-    let format = WaveFormat(sampleRate, byteDepth*8, nChannel )
-    let mutable numSamples = 0
-    let proc (b:byte) = writer.Write(b)
-    let packChannels samples =
-      Seq.iter (pack byteDepth proc) samples
-      numSamples <- numSamples + 1
-    
-    // write to memory stream
-    Seq.iter packChannels (zipSeq channels)
-
-    let worker = new BackgroundWorker()
-    worker.DoWork.Add( fun args ->
-      use ms2 = new MemoryStream( ms1.GetBuffer() )
-      use wavestream = new RawSourceWaveStream( ms2, format )
-      use wo = new WaveOut() 
-      wo.Init(wavestream)
-      wo.Play()
-      System.Threading.Thread.Sleep(numSamples/sampleRate/nChannel*1000)
-    )
-    worker.RunWorkerAsync()
-
-  ///
   /// <summary>Plays a SoundFile using NAudio as a background job</summary>
   /// <param name="sf">SoundFile object</param>
   /// <returns>unit</returns>
   ///
   let playSoundFile (sf: SoundFile) =
     sf.Samples |> play (int sf.SamplingRate) sf.BitDepth sf.NumChannels 
-
-  type SineWaveProvider32 (sr, a:float, f:float) =  
-    inherit WaveProvider32() with
-    let mutable nSample = 0
-    override t.Read((buffer:float32[]), offset, count) =
-      printfn "offset: %d, count: %d, f: %f, a: %f" offset count f a
-      for n in 0..count do
-        let s = float32 (a* sin(2.0*System.Math.PI*(float nSample)*f/(float sr)))
-        buffer.[offset+n] <- s
-        nSample <- nSample + 1
-        if nSample >= sr then nSample <- 0
-        // printfn "sample: %f, n: %d, nSample: %d" s n nSample
-      count
 
   ///
   /// <summary>Plays a float array using ISampleProvider.  This is experimental
@@ -105,16 +60,27 @@ module Play =
   /// <param name="samples">array of floats as samples</param>
   /// <returns>unit</returns>
   ///
-  let play3 sampleRate =
+  let play2 sampleRate (samples:float[]) =
     let worker = new BackgroundWorker()
+    let duration = samples.Length/sampleRate
     let posRead = ref 0
-    let f = 1000.0
-    let a = 10000.0
-    
+    let provider = {
+      new ISampleProvider with 
+
+        member p.Read(buffer, offset, count) = 
+          let samples' = samples |> Array.map float32
+          let size = samples.Length
+          let count' = if !posRead+count <= size then count else size-(!posRead)
+          Array.blit samples' !posRead buffer offset count'
+          posRead := !posRead + count'
+          if count' < count then 0 else count'
+        member p.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 
+                                                                    1)
+    }
     worker.DoWork.Add( fun _ ->
       use wo = new WaveOut()
-      wo.Init(SineWaveProvider32(44100, 10000.0, 440.0)) 
+      wo.Init(SampleProviders.SampleToWaveProvider16(provider)) 
       wo.Play()
-      System.Threading.Thread.Sleep(1000)
+      System.Threading.Thread.Sleep(duration*1000)
     )
     worker.RunWorkerAsync()
