@@ -320,11 +320,11 @@ module IO =
   /// <param name="bytesPerSample">Bit depth in number of bytes</param>
   /// <param name="path">Path of the wav file to be created.  N.B. Any existing
   /// file is overwritten!</param>
-  /// <param name="samples">Sequence of sequence of samples. Each inner
+  /// <param name="channels">Sequence of sequence of samples. Each inner
   /// sequence represents one channel</param>
   /// <returns>unit</returns>
   ///
-  let streamToWav samplingRate bytesPerSample path channels =
+  let streamToWavMultiple samplingRate bytesPerSample path channels =
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
     let mutable numSamples = 0
@@ -427,3 +427,24 @@ module IO =
   /// f to the original elements in the input pair</returns>
   ///
   let pairMap f (a, b) = (f a, f b)
+
+  ///
+  /// <summary>Chooser function which picks a more memory efficient version of
+  /// the stream function according to the number of channels</summary>
+  /// <param name="samplingRate">Sampling rate in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="path">Path of the wav file to be created.  N.B. Any existing
+  /// file is overwritten!</param>
+  /// <param name="channels">Sequence of sequence of samples. Each inner
+  /// sequence represents one channel</param>
+  /// <returns>unit</returns>
+  ///
+  let streamToWav samplingRate bytesPerSample path channels =
+    match channels with
+    | [] -> ()
+    | [mono] -> streamToWavMono samplingRate bytesPerSample path mono
+    | [l; r] -> streamToWavLR samplingRate bytesPerSample path (l, r)
+    | rest -> streamToWavMultiple samplingRate bytesPerSample path rest
+
+
+
