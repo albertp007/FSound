@@ -394,7 +394,7 @@ module IO =
   /// <param name="samples">list of sequence of samples</param>
   /// <returns>unit</returns>
   ///
-  let streamToWavLR samplingRate bytesPerSample path [left; right] =
+  let streamToWavLR samplingRate bytesPerSample path (left, right) =
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
     let mutable numSamples = 0
@@ -414,3 +414,16 @@ module IO =
     writer.Write(36+numBytes)
     fileStream.Seek(32L, SeekOrigin.Current) |> ignore
     writer.Write(numBytes)
+
+  ///
+  /// <summary>Maps function to each element in a pair for facilitating the use
+  /// of the streamToWavLR function for which the left and right sequence of 
+  /// samples are represented as a pair which types check better than using a
+  /// list</summary>
+  /// <param name="f">function to be applied</param>
+  /// <param name="a">first element in the pair</param>
+  /// <param name="b">second element in the pair</param>
+  /// <returns>A pair of elements which are the results of applying the function
+  /// f to the original elements in the input pair</returns>
+  ///
+  let pairMap f (a, b) = (f a, f b)
