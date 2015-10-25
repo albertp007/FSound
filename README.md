@@ -198,10 +198,10 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal;;
   [sinusoid 10000.0 440.0 0.0; sinusoid 10000.0 445.0 0.0] 
   |> List.map (generate 44100.0 5.0) 
-  |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
+  |> streamToWavMultiple 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
   ```
 
-* A  more memory-efficient version of function to stream two sequences of samples as left and right channel to a wav file
+* A  more memory-efficient version of function to stream two sequences of samples as left and right channel to a wav file (Use streamToWav which will choose the more efficient function to call according to the number of channels)
 
   ```
   open FSound.IO;;
@@ -209,6 +209,20 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   (sinusoid 10000.0 440.0 0.0, sinusoid 10000.0 445.0 0.0)
   |> pairMap (generate 44100.0 5.0) 
   |> streamToWavLR 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
+  ```
+  
+* A crude implementation of the plucked string using Karplus-Strong algorithm.  (Attenuation/Decay cannot be controlled at the moment)
+
+  ```
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  pluck2LevelRandom 10000.0 44100.0 256.0 |> playWave 44100.0 5.0;;
+  // For some interesting combinations with different variations of modulated delay line
+  // Note:  When copying to F# interactive, copy and execute line by line, or they will
+  // all sound at the same time
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0 |> playWave 44100.0 5.0;;
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0 |> playWave 44100.0 5.0;;
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 |> playWave 44100.0 5.0;;
   ```
   
 ## Motivation
