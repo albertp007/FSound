@@ -59,7 +59,7 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let whiteNoise a (t:float) = a * (random.NextDouble() - 0.5)
+  let whiteNoise a (t:float) = 2.0 * a * (random.NextDouble() - 0.5)
 
   ///
   /// <summary>Square waveform function</summary>
