@@ -29,8 +29,8 @@ module Data =
   /// size of the array used as buffer</param>
   /// <param name="initValue">initial value to populate every slot of the
   /// array during initialization</param>
-  type CircularBuffer<'T> (n, lag, initValue:'T) =
-    let buffer = Array.init n (fun i -> initValue)
+  type CircularBuffer<'T> (n, lag, initFunc:(int->'T)) =
+    let buffer = Array.init n initFunc
     let size = n
     
     let calcPos m current =
