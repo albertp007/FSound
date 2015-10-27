@@ -28,6 +28,7 @@ module Filter =
   open FSound.Signal
 
   let private random = System.Random()
+  let private random2 = System.Random()
 
   ///
   /// <summary>Filter with feedforward and feedback coefficients
@@ -259,19 +260,22 @@ module Filter =
   /// <param name="a">Maximum amplitude in the wave table</param>
   /// <param name="fs">Sampling frequencey in Hz</param>
   /// <param name="f">Frequency in Hz</param>
+  /// <param name="blend"> 1.0 - plucked string, 0.5 - snare drum</param>
   /// <param name="initBufferFunc">Function to initialize the wave table</param>
   /// <returns>Function which takes one dummy argument and generates samples
   /// that sounds like a plucked string using the Karplus Strong algorithm
   /// </returns>
   ///
-  let pluckInitBuffer a (fs:float) f (initBufferFunc:(int->float)) =
+  let pluckInitBuffer a (fs:float) f blend (initBufferFunc:(int->float)) =
     let nSample = (int (round fs/f))
-    let lag = nSample - 1
-    let wavetable = CircularBuffer(nSample, 0, initBufferFunc)
+    let lag = nSample
+    let wavetable = CircularBuffer(nSample, lag, initBufferFunc)
     fun (_:float) -> 
       let output = wavetable.Get()
-      wavetable.Push( 0.5 * ( wavetable.GetOffset(-lag) + 
-                              wavetable.GetOffset(-lag+1) ) )
+      let y = 0.5*(wavetable.Get() + wavetable.GetOffset(-1))
+      let y' = if blend = 1.0 then y else 
+                (if random2.NextDouble() <= blend then 1.0 else -1.0) * y
+      wavetable.Push(y')
       output
 
   ///
@@ -304,7 +308,7 @@ module Filter =
   /// </returns>
   ///
   let pluck2LevelRandom a (fs:float) f =
-    pluckInitBuffer a fs f (init2LevelRandom a)
+    pluckInitBuffer a fs f 1.0 (init2LevelRandom a)
 
   ///
   /// <summary>Pluck string function with white noise initialization. This 
@@ -317,5 +321,4 @@ module Filter =
   /// </returns>
   ///
   let pluckWhiteNoise a (fs:float) f =
-    pluckInitBuffer a fs f (initWhiteNoise a)
-
+    pluckInitBuffer a fs f 1.0 (initWhiteNoise a)
