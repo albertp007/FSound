@@ -36,7 +36,7 @@ module Data =
     let calcPos m current =
       let toPos = m + current
       if toPos >= size then toPos % size 
-      else if toPos < 0 then (size + toPos % size)
+      else if toPos < 0 then (size + toPos % size) % size
       else toPos
    
     let mutable posW = 0
