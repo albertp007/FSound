@@ -191,10 +191,10 @@ module Filter =
     let bufferSize = int (fs * bufferSec)
     let delaySamples = delayMs / 1000.0 * fs
     let buffer = CircularBuffer(bufferSize, 0, fun _ -> 0.0)
-    let mutable n = 0
+    let n = ref 0
     fun sample ->
-      n <- n + 1
-      let t = (float n)/fs
+      n := !n + 1
+      let t = (float !n)/fs
       // Add an extra one sample to the delay to make sure there is one sample 
       // ahead for linear interpolation
       let d = (lfo t) * delaySamples + 1.0
