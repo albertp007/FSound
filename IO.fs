@@ -265,7 +265,7 @@ module IO =
   /// <returns>clipped sample value that fits in the range of the number of
   /// bytes</returns>
   ///
-  let clip byteDepth sample =   
+  let clip byteDepth sample = 
     let range = 2.0**(float (abs byteDepth) * 8.0)
     let minValue = -range/2.0
     let maxValue = range/2.0 - 1.0
@@ -303,6 +303,35 @@ module IO =
       while hasNext() do
         yield enumerators |> List.map (fun e -> e.Current)
     }
+
+  type SampleSeq =
+    | Mono of seq<float>
+    | Stereo of seq<float> * seq<float>
+    | Multi of seq<float> list
+
+  let packSamples byteDepth stream (samples: SampleSeq) =
+    let bytesWritten = ref 0
+    use writer = new BinaryWriter(stream)
+    let proc (b:byte) = 
+      writer.Write(b)
+      bytesWritten := !bytesWritten + 1
+    
+    // pack one single sample
+    let pack1 = pack byteDepth proc
+    // pack left sample, then right sample
+    let pack2 (l, r) = 
+      pack byteDepth proc l
+      pack byteDepth proc r
+    // pack a sequence of samples, each sample in a separate channel
+    let packN channels =
+      Seq.iter pack1 channels
+
+    match samples with
+    | Mono sequence -> Seq.iter pack1 sequence
+    | Stereo (left, right) -> Seq.iter pack2 (Seq.zip left right)
+    | Multi channels -> Seq.iter packN (zipSeq channels)
+    
+    !bytesWritten
 
   ///
   /// <summary>Stream a list of sequence of samples to a wave file.  Each
