@@ -76,7 +76,7 @@ let testSum() =
   testWaveform wf @"sum.wav"
 
 let testRead() =
-  let gen = squareGenerator 20000.0 440.0 44100.0 2.0
+  let gen = sawGenerator 20000.0 440.0 44100.0 2.0
   let w1 = SoundFile(44100.0, 2, true, (Mono gen))
   let fileName = @"temp_square.wav"
   w1.WriteWav fileName
@@ -147,5 +147,7 @@ let test() =
   testNoise()
   testWave()
   testAdsr()
+  testRead()
   testFilter()
+
 

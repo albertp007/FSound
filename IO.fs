@@ -89,7 +89,6 @@ module IO =
     let rec pushShift (init:int64) (bs:byte list) =
       match bs with
       | [] -> init
-      | [h] -> (init <<< 8) ||| (int64 h)
       | h::t -> pushShift (init <<< 8 ||| (int64 h)) t
     bytes |> Array.rev |> Array.toList |> pushShift init |> float
 
@@ -140,12 +139,14 @@ module IO =
       | Stereo _ -> 2
       | Multi s -> Seq.length s
      
-  let private genIndices numChannels bytesPerSample channel lengthSamples =
-    let bytesPerChannel = bytesPerSample * numChannels
-    let lengthSamples' = lengthSamples/bytesPerChannel*bytesPerChannel
-    let offset = bytesPerSample*(channel%numChannels)
-    seq { offset..(bytesPerChannel)..(lengthSamples'-1+offset) }
-
+  ///
+  /// <summary>Converts raw bytes read from a wav file to SampleSeq object
+  /// </summary>
+  /// <param name="numChannels">Number of channels in the raw bytes</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="raw">Raw bytes to be converted</param>
+  /// <returns>SampleSeq object</returns>
+  ///
   let rawBytesToSampleSeq numChannels bytesPerSample (raw:byte[]) =
     let length = raw.Length
     let numSamples = length/numChannels/bytesPerSample
