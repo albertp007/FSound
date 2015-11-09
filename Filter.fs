@@ -155,7 +155,7 @@ module Filter =
   /// <returns>Function which takes a sample and returns a response with delay
   /// </returns>
   ///
-  let delay fs bufferSec delayMs feedback wet =
+  let delay fs bufferSec delayMs gain feedback wet =
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
     let bufferSize = int (fs * bufferSec)
     let delaySamples = delayMs / 1000.0 * fs
@@ -168,7 +168,7 @@ module Filter =
         else cubicInterpolate (buffer.GetOffset -1) (buffer.Get()) 
                (buffer.GetOffset 1) (buffer.GetOffset 2) fractionalDelay
       let xn = sample
-      buffer.Push (xn + feedback * yn)
+      buffer.Push (gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
 
   ///
@@ -185,7 +185,7 @@ module Filter =
   /// <returns>Function which takes a sample and returns a response with delay
   /// </returns>
   ///
-  let mod_delay fs bufferSec delayMs feedback wet lfo =
+  let mod_delay fs bufferSec delayMs gain feedback wet lfo =
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
     if bufferSec * 1000.0 < delayMs then failwith "buffer size not large enough"
     let bufferSize = int (fs * bufferSec)
@@ -206,7 +206,7 @@ module Filter =
       let yn = if abs (d - 1.0) < 0.0000001 then sample else 
                  buffer.Get() * (1.0 - frac) + (buffer.GetOffset 1) * frac
       let xn = sample
-      buffer.Push (xn + feedback * yn)
+      buffer.Push (gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
 
   ///
@@ -223,7 +223,7 @@ module Filter =
   ///
   let flanger fs maxDelayMs feedback wet sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs feedback wet 
+    mod_delay fs bufferSec maxDelayMs 1.0 feedback wet 
       (lfo sweepFreq System.Math.PI 1.0)
 
   ///
@@ -237,7 +237,8 @@ module Filter =
   ///
   let vibrato fs maxDelayMs sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 0.0 1.0 (lfo sweepFreq System.Math.PI 1.0)
+    mod_delay fs bufferSec maxDelayMs 1.0 0.0 1.0 
+      (lfo sweepFreq System.Math.PI 1.0)
 
   ///
   /// <summary>Chorus - largely the same as the vibrato except that the lfo
@@ -250,7 +251,7 @@ module Filter =
   /// 
   let chorus fs maxDelayMs wet sweepFreq =
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 0.0 wet 
+    mod_delay fs bufferSec maxDelayMs 1.0 0.0 wet 
       (lfo sweepFreq (System.Math.PI/2.0) 1.0)
 
   ///
