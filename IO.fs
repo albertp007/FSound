@@ -25,48 +25,151 @@ module IO =
   open System.IO
 
   ///
-  /// <summary>This type represents Samples which can be one of the three cases
-  /// 1. Raw bytes
-  /// 2. Bit8 which is a 8 bit sample (interpreted as signed byte)
-  /// 3. Bit16 which is a 16-bit sample (interpreted as int16)
+  /// <summary>Zip a list of sequence from http://fssnip.net/kz by Samuel Bosch
   /// </summary>
-  /// 
-  type Samples =
-    | Raw of byte[]
-    | Bit8 of sbyte[]
-    | Bit16 of int16[]
-    member s.Length = match s with
-                      | Raw b -> b.Length
-                      | Bit8 b -> b.Length
-                      | Bit16 b-> b.Length
-    member s.NumBytes = match s with
-                        | Bit16 _ -> 2 * s.Length
-                        | _ -> s.Length
+  /// <param name="lstSequences">the list of sequences to be zipped</param>
+  /// <returns>A sequence of a list of elements of type in the sequences being
+  /// zipped</returns>
+  ///
+  let zipSeq (lstSequences:list<seq<'a>>) = 
+    let enumerators = lstSequences 
+                      |> List.map (fun (s:seq<'a>) -> (s.GetEnumerator()))
+    seq {
+      let hasNext() = enumerators 
+                      |> List.exists (fun e -> not (e.MoveNext())) |> not
+      while hasNext() do
+        yield enumerators |> List.map (fun e -> e.Current)
+    }
 
-  let samplesToBytes (samples:Samples) =
-    match samples with
-    | Raw bs -> bs
-    | others -> use ms = new MemoryStream(samples.NumBytes)
-                use writer = new BinaryWriter(ms)
-                match others with
-                | Bit8 bs -> bs |> Array.iter writer.Write
-                             ms.GetBuffer()
-                | Bit16 bs -> bs |> Array.iter writer.Write
-                              ms.GetBuffer()
-                | _ -> failwith "Should never have come here"
+  ///
+  /// <summary>Clip a sample in float to fit the range of the specified depth
+  /// in number of bytes</summary>
+  /// <param name="byteDepth">bit depth but in number of bytes</param>
+  /// <param name="sample">the sample value which is a float</param>
+  /// <returns>clipped sample value that fits in the range of the number of
+  /// bytes</returns>
+  ///
+  let clip byteDepth sample = 
+    let range = 2.0**(float (abs byteDepth) * 8.0)
+    let minValue = -range/2.0
+    let maxValue = range/2.0 - 1.0
+    min (max minValue sample) maxValue
 
+  ///
+  /// <summary>Pack a sample in float to the number of bytes specified. Only
+  /// support up to 8 bytes</summary>
+  /// <param name="byteDepth">number of bytes to fit the sample in. Any sample
+  /// falling outside of the range supported by the specified number of bytes
+  /// is clipped</param>
+  /// <param name="sample">the sample value which is a float</param>
+  /// <returns>A sequence of (unsigned) bytes of length specified in byteDepth
+  /// </returns>
+  ///
+  let pack byteDepth proc sample =
+    if abs byteDepth > 8 then failwith "Depth larger than 8 bytes not supported"
+    let clipped = int64 (clip byteDepth sample)
+    for i in 0..(byteDepth-1) do 
+      proc (byte (clipped >>> (i * 8) &&& (int64 0xFF)))
+
+  ///
+  /// <summary>Convert a byte array to float. Most significant byte is assumed
+  /// to be at the end of the array (Little endian). This function is the
+  /// reciprocal of the pack function. Bytes are first converted to an int64
+  /// then casted to float.  As such, array larger than 8 elements is not
+  /// supported</summary>
+  /// <param name="bytes">Array of bytes to convert to float</param>
+  /// <returns>Float value converted from array of bytes</returns>
+  ///  
+  let bytesToFloat (bytes: byte[]) =
+    let maxByte = 8
+    let length = Array.length bytes
+    if length > maxByte then failwith "Does not support more than 8 bytes"
+    let isNegative = bytes.[length-1] &&& 0x80uy > 0uy
+    let init = if isNegative then -1L else 0L
+    let rec pushShift (init:int64) (bs:byte list) =
+      match bs with
+      | [] -> init
+      | [h] -> (init <<< 8) ||| (int64 h)
+      | h::t -> pushShift (init <<< 8 ||| (int64 h)) t
+    bytes |> Array.rev |> Array.toList |> pushShift init |> float
+
+  ///
+  /// <summary>Abstract sequence of samples for mono (sequence of floats), 
+  /// stereo (a pair of sequences of floats) and multi-channel (a list of
+  /// sequence of floats)</summary>
+  ///
+  type SampleSeq =
+    | Mono of seq<float>
+    | Stereo of seq<float> * seq<float>
+    | Multi of seq<float> list
+
+    ///
+    /// <summary>Member function which packs the sequence of samples into a
+    /// writer</summary>
+    /// <param name="byteDepth">Bit depth in number of bytes</param>
+    /// <param name="writer">Binary writer to write the bytes to</param>
+    /// <returns>Number of writes written</returns>
+    ///
+    member x.Pack byteDepth (writer: BinaryWriter) =
+      let bytesWritten = ref 0
+      let proc (b:byte) = 
+        writer.Write(b)
+        bytesWritten := !bytesWritten + 1
+
+      // pack one single sample
+      let pack1 = pack byteDepth proc
+      // pack left sample, then right sample
+      let pack2 (l, r) = 
+        pack byteDepth proc l
+        pack byteDepth proc r
+      // pack a sequence of samples, each sample in a separate channel
+      let packN channels =
+        Seq.iter pack1 channels
+      match x with
+      | Mono sequence -> Seq.iter pack1 sequence
+      | Stereo (left, right) -> Seq.iter pack2 (Seq.zip left right)
+      | Multi channels -> Seq.iter packN (zipSeq channels)
+      !bytesWritten
+
+    ///
+    /// <summary>Number of channels property</summary>
+    ///
+    member x.NumChannels = 
+      match x with
+      | Mono _ -> 1
+      | Stereo _ -> 2
+      | Multi s -> Seq.length s
+     
   let private genIndices numChannels bytesPerSample channel lengthSamples =
     let bytesPerChannel = bytesPerSample * numChannels
     let lengthSamples' = lengthSamples/bytesPerChannel*bytesPerChannel
     let offset = bytesPerSample*(channel%numChannels)
     seq { offset..(bytesPerChannel)..(lengthSamples'-1+offset) }
 
+  let rawBytesToSampleSeq numChannels bytesPerSample (raw:byte[]) =
+    let length = raw.Length
+    let numSamples = length/numChannels/bytesPerSample
+    let bytesPerChannel = bytesPerSample * numChannels
+    let s = seq {
+      for i in [0..(numChannels-1)] ->
+        seq {
+          for j in [(i*bytesPerSample)..bytesPerChannel..(numSamples*bytesPerChannel-1)] do
+            yield raw.[j..(j+bytesPerSample-1)] |> bytesToFloat
+        }
+    }
+    match Seq.toList s with
+    | [] -> failwith "No channel"
+    | [mono] -> Mono mono
+    | [left; right] -> Stereo (left, right)
+    | multi -> Multi multi
+    
+
   /// <summary>Reads a PCM wave file and return a SoundFile object</summary>
   /// <param name="path">Path of the file</param>
   /// <returns>a SoundFile object representing the data in the wav file. If the
   /// file has only one channel, then the first of the tuple in Data contains
   /// the data and the second of the tuple is empty</returns>
-  let private readWavFile (path: string) =
+  let readWavFile (path: string) =
     use fileStream = new System.IO.FileStream( path, System.IO.FileMode.Open )
     use reader = new System.IO.BinaryReader(fileStream)
     // read chunk id - 4 bytes
@@ -98,10 +201,11 @@ module IO =
     let idChunk2 = reader.ReadBytes(4)
     if idChunk2 <> "data"B then
       failwith "Incorrect format: chunk 2 id not 'data'"
-    let nBytes = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)  
-
-    (float samplingRate, numChannels, bitsPerSample, (audioFormat = 1),
-      (Raw (reader.ReadBytes(nBytes))))
+    let nBytes = System.BitConverter.ToInt32(reader.ReadBytes(4), 0)
+    let raw = reader.ReadBytes(nBytes)
+    let bytesPerSample = bitsPerSample/8
+    (float samplingRate, bytesPerSample, (audioFormat = 1),
+      (rawBytesToSampleSeq numChannels bytesPerSample raw))
 
   ///
   /// <summary>Private helper function which writes the header of a wav file
@@ -140,199 +244,39 @@ module IO =
     writer.Write(bitsPerSample)     // 34
     writer.Write(subChunk2Id)       // 36
     writer.Write(subChunk2Size)     // 40 (*)
+ 
+  ///
+  /// <summary>Pack a sequence of samples. It simply forwards to the member
+  /// function to make pipelining easier</summary>
+  /// <param name="byteDepth">bit depth in number of bytes</param>
+  /// <param name="writer">Binary writer to write bytes to</param>
+  /// <param name="samples">SampleSeq</param>
+  ///
+  let packSampleSequence byteDepth writer (samples: SampleSeq) =
+    samples.Pack byteDepth writer
 
   ///
-  /// <summary>Writes raw data and associated properties to a PCM wav file
-  /// </summary>
-  /// <param name="path">path of the wav file.  Caution: if the file already
-  /// exists, it will be overwritten</param>
-  /// <param name="sf">sampling frequency - int</param>
-  /// <param name="nc">number of channels - short/int16</param>
-  /// <param name="bps">bits per sample</param>
-  /// <param name="samples">Samples value</param>
+  /// <summary>Stream a sequence of samples to a wav format file</summary>
+  /// <param name="samplingRate">Sampling rate in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="path">Path of the wav file to be created.  N.B. Any existing
+  /// file is overwritten!</param>
   /// <returns>unit</returns>
   ///
-  let private writeWavFile path (sf, nc, bps, samples: Samples) =
+  let streamSeqToWav samplingRate bytesPerSample path (samples: SampleSeq) =
     use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
     use writer = new System.IO.BinaryWriter(fileStream)
-    writeWavHeader sf nc (int bps/8) samples.NumBytes writer
-    match samples with
-    | Raw bs -> writer.Write(bs)
-    | Bit8 bs -> bs |> Array.iter writer.Write 
-    | Bit16 bs -> bs |> Array.iter writer.Write
-  
-  ///
-  /// <summary>Type to represent a sound file</summary>
-  /// <param name="samplingRate">sampling frequency</param>
-  /// <param name="numChannels">number of channels</param>
-  /// <param name="bitDepth">number of bits per sample</param>
-  /// <param name="isPCM">whether the format is PCM, for writing, it must be
-  /// true</param>
-  /// <param name="samples">A Samples value which can be either Raw byte[] or
-  /// interpreted as 8-bit or 16-bit signed sample. If there are more than one
-  /// channels, sample for each channel is concatenated one after the other
-  /// <returns>SoundFile object</returns>
-  ///
-  type SoundFile (samplingRate: float, 
-                  numChannels: int, 
-                  bitDepth: int,
-                  isPCM: bool,
-                  samples: Samples) =
-
-    let read samples n = 
-      match samples with
-      | Raw bs -> match bitDepth with
-                  | 8 -> bs.[n] |> int8 |> float
-                  | 16 -> float(System.BitConverter.ToInt16(bs, n))
-                  | _ -> failwith "Bit depth must be either 8 or 16"
-      | Bit8 bs -> float bs.[n]
-      | Bit16 bs -> float bs.[n]
-
-    //
-    // if samples is Raw, then we need bitDepth to calculate number of elements
-    // in the array belonging to the same sample.  if samples is Bit8 or Bit16
-    // then it means bitDepth is already taken into account in the array and
-    // therefore the number of elements per sample is simply 1
-    //
-    let numElementsPerSample = match samples with
-                               | Raw _ -> bitDepth / 8
-                               | _ -> 1
-    
-    member f.SamplingRate = samplingRate
-    member f.BitDepth = bitDepth
-    member f.Samples = samples
-    member f.IsPCM = isPCM
-    member f.NumChannels = numChannels
-    member f.Channels = [|
-      for i in [0..(numChannels-1)] ->
-      samples.Length
-      |> genIndices numChannels numElementsPerSample i
-      |> Seq.map (fun n -> read samples n) 
-      |]
-    member f.WriteWav path = 
-      writeWavFile path (int f.SamplingRate, f.NumChannels, f.BitDepth, 
-        f.Samples)
-    // static member ReadWav (path:string) = readWavFile path |> SoundFile
-    static member ReadWav (path:string) = SoundFile (readWavFile path)
-
-  ///
-  /// <summary>Utility function to write a SoundFile object to a wav file
-  /// given a path</summary>
-  /// <param name="path">path of the wav file to be written to. Caution: if the
-  /// file already exists, it will be overwritten</param>
-  /// <param name="soundFile">SoundFile object</param>
-  /// <returns>unit</returns>
-  ///
-  let toWav path (soundFile:SoundFile) = soundFile.WriteWav path
-
-  ///
-  /// <summary>Utility function to convert a sequence of floats to a Samples
-  /// value, ready to be written to a wav file by the WriteWav function in
-  /// SoundFile</summary>
-  /// <param name="f">sequence of floats to be converted</param>
-  /// <returns>Samples value</returns>
-  ///
-  // Previously, floatTo16 converts to a byte array because that's the only way
-  // samples are represented in SoundFile.  With the Samples discriminated union
-  // however, samples can be represented by interpreted 8-bit or 16-bit samples
-  // directly.  The WriteWav function then uses BinaryWriter which is capable of
-  // writing sbyte or int16 directly.  This cuts down on a call to Seq.collect
-  // used to flatten the byte[] returned from System.BitConverter.GetBytes.
-  // Without this call, GC gen0 is cut down from 10 to 3 based on the
-  // SignalTest script testcases
-  //
-  let floatTo16 (f:seq<float>) =
-    f |> Seq.map int16 |> Seq.toArray |> Bit16
-
-  ///
-  /// <summary>Utility function to create a SoundFile instance, being a function
-  /// it can be curried</summary>
-  /// <param name="samplingRate">sampling rate - float</param>
-  /// <param name="numChannels">number of channels - int</param>
-  /// <param name="bitDepth">bits per sample - int</param>
-  /// <param name="isPCM">whether the data is PCM format - bool</param>
-  /// <param name="rawData">the raw data bytes - byte[]</param>
-  /// <returns>a SoundFile object</returns>
-  ///
-  let makeSoundFile samplingRate numChannels bitDepth isPCM rawData =
-    SoundFile(samplingRate, numChannels, bitDepth, isPCM, rawData)
-   
-  ///
-  /// <summary>Clip a sample in float to fit the range of the specified depth
-  /// in number of bytes</summary>
-  /// <param name="byteDepth">bit depth but in number of bytes</param>
-  /// <param name="sample">the sample value which is a float</param>
-  /// <returns>clipped sample value that fits in the range of the number of
-  /// bytes</returns>
-  ///
-  let clip byteDepth sample = 
-    let range = 2.0**(float (abs byteDepth) * 8.0)
-    let minValue = -range/2.0
-    let maxValue = range/2.0 - 1.0
-    min (max minValue sample) maxValue
-
-  ///
-  /// <summary>Pack a sample in float to the number of bytes specified. Only
-  /// support up to 8 bytes</summary>
-  /// <param name="byteDepth">number of bytes to fit the sample in. Any sample
-  /// falling outside of the range supported by the specified number of bytes
-  /// is clipped</param>
-  /// <param name="sample">the sample value which is a float</param>
-  /// <returns>A sequence of (unsigned) bytes of length specified in byteDepth
-  /// </returns>
-  ///
-  let pack byteDepth proc sample =
-    if abs byteDepth > 8 then failwith "Depth larger than 8 bytes not supported"
-    let clipped = int64 (clip byteDepth sample)
-    for i in 0..(byteDepth-1) do 
-      proc (byte (clipped >>> (i * 8) &&& (int64 0xFF)))
-
-  ///
-  /// <summary>Zip a list of sequence from http://fssnip.net/kz by Samuel Bosch
-  /// </summary>
-  /// <param name="lstSequences">the list of sequences to be zipped</param>
-  /// <returns>A sequence of a list of elements of type in the sequences being
-  /// zipped</returns>
-  ///
-  let zipSeq (lstSequences:list<seq<'a>>) = 
-    let enumerators = lstSequences 
-                      |> List.map (fun (s:seq<'a>) -> (s.GetEnumerator()))
-    seq {
-      let hasNext() = enumerators 
-                      |> List.exists (fun e -> not (e.MoveNext())) |> not
-      while hasNext() do
-        yield enumerators |> List.map (fun e -> e.Current)
-    }
-
-  type SampleSeq =
-    | Mono of seq<float>
-    | Stereo of seq<float> * seq<float>
-    | Multi of seq<float> list
-
-  let packSamples byteDepth stream (samples: SampleSeq) =
-    let bytesWritten = ref 0
-    use writer = new BinaryWriter(stream)
-    let proc (b:byte) = 
-      writer.Write(b)
-      bytesWritten := !bytesWritten + 1
-    
-    // pack one single sample
-    let pack1 = pack byteDepth proc
-    // pack left sample, then right sample
-    let pack2 (l, r) = 
-      pack byteDepth proc l
-      pack byteDepth proc r
-    // pack a sequence of samples, each sample in a separate channel
-    let packN channels =
-      Seq.iter pack1 channels
-
-    match samples with
-    | Mono sequence -> Seq.iter pack1 sequence
-    | Stereo (left, right) -> Seq.iter pack2 (Seq.zip left right)
-    | Multi channels -> Seq.iter packN (zipSeq channels)
-    
-    !bytesWritten
-
+    let numChannels = samples.NumChannels 
+    // write header
+    writeWavHeader samplingRate numChannels bytesPerSample 0 writer
+    // pack and write the stream
+    let bytesWritten = packSampleSequence bytesPerSample writer samples
+    // now we should know the number of bytes
+    fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
+    writer.Write(36+bytesWritten)
+    fileStream.Seek(32L, SeekOrigin.Current) |> ignore
+    writer.Write(bytesWritten)
+          
   ///
   /// <summary>Stream a list of sequence of samples to a wave file.  Each
   /// sequence in the list represents one channel.  This function iterates
@@ -354,29 +298,12 @@ module IO =
   /// <returns>unit</returns>
   ///
   let streamToWavMultiple samplingRate bytesPerSample path channels =
-    use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
-    use writer = new System.IO.BinaryWriter(fileStream)
-    let numSamples = ref 0
-    let proc (b:byte) = writer.Write(b)
-    let packChannels samples =
-      Seq.iter (pack bytesPerSample proc) samples
-      numSamples := !numSamples + 1
-    let numChannels = Seq.length channels
-    // write header
-    writeWavHeader samplingRate numChannels bytesPerSample 0 writer
-    // pack and write the stream
-    Seq.iter packChannels (zipSeq channels)
-    // now we should know the number of bytes
-    let numBytes = !numSamples * bytesPerSample * numChannels
-    fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
-    writer.Write(36+numBytes)
-    fileStream.Seek(32L, SeekOrigin.Current) |> ignore
-    writer.Write(numBytes)
+    streamSeqToWav samplingRate bytesPerSample path (Multi channels)
 
   ///
   /// <summary>Stream one sequence of samples to a wav file.  There is only
-  /// one channel, hence "Mono".  This is similar to streamToWav but is less 
-  /// memory-hungry since the number of channels is fixed to 1, there is no
+  /// one channel, hence "Mono".  This is similar to streamToWavMultiple but is
+  /// less memory-hungry since the number of channels is fixed to 1, there is no
   /// overhead required to run map for the case when the number of sequence of
   /// samples isn't known before hand.  This uses 15% of the memory 
   /// footprint of streamToWav according to the .Net memory profiling tool
@@ -389,24 +316,7 @@ module IO =
   /// <returns>unit</returns>
   ///
   let streamToWavMono samplingRate bytesPerSample path samples =
-    use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
-    use writer = new System.IO.BinaryWriter(fileStream)
-    let numSamples = ref 0
-    let proc (b:byte) = writer.Write(b)
-    let packSample sample =
-      pack bytesPerSample proc sample
-      numSamples := !numSamples + 1
-    let numChannels = 1
-    // write header
-    writeWavHeader samplingRate numChannels bytesPerSample 0 writer
-    // pack and write the stream
-    Seq.iter packSample samples
-    // now we should know the number of bytes
-    let numBytes = !numSamples * bytesPerSample * numChannels
-    fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
-    writer.Write(36+numBytes)
-    fileStream.Seek(32L, SeekOrigin.Current) |> ignore
-    writer.Write(numBytes)
+    streamSeqToWav samplingRate bytesPerSample path (Mono samples)
 
   ///
   /// <summary>Stream two sequence of samples to a wav file - left and right
@@ -424,25 +334,7 @@ module IO =
   /// <returns>unit</returns>
   ///
   let streamToWavLR samplingRate bytesPerSample path (left, right) =
-    use fileStream = new System.IO.FileStream(path, System.IO.FileMode.Create)
-    use writer = new System.IO.BinaryWriter(fileStream)
-    let numSamples = ref 0
-    let proc (b:byte) = writer.Write(b)
-    let packSamples (l, r) =
-      pack bytesPerSample proc l
-      pack bytesPerSample proc r
-      numSamples := !numSamples + 1
-    let numChannels = 2
-    // write header
-    writeWavHeader samplingRate numChannels bytesPerSample 0 writer
-    // pack and write the stream
-    Seq.iter packSamples (Seq.zip left right)
-    // now we should know the number of bytes
-    let numBytes = !numSamples * bytesPerSample * numChannels
-    fileStream.Seek(4L, SeekOrigin.Begin) |> ignore
-    writer.Write(36+numBytes)
-    fileStream.Seek(32L, SeekOrigin.Current) |> ignore
-    writer.Write(numBytes)
+    streamSeqToWav samplingRate bytesPerSample path (Stereo (left, right))
 
   ///
   /// <summary>Maps function to each element in a pair for facilitating the use
@@ -475,5 +367,29 @@ module IO =
     | [l; r] -> streamToWavLR samplingRate bytesPerSample path (l, r)
     | rest -> streamToWavMultiple samplingRate bytesPerSample path rest
 
+  ///
+  /// <summary>Type to represent a sound file</summary>
+  /// <param name="samplingRate">sampling frequency</param>
+  /// <param name="numChannels">number of channels</param>
+  /// <param name="bitDepth">number of bits per sample</param>
+  /// <param name="isPCM">whether the format is PCM, for writing, it must be
+  /// true</param>
+  /// <param name="samples">A Samples value which can be either Raw byte[] or
+  /// interpreted as 8-bit or 16-bit signed sample. If there are more than one
+  /// channels, sample for each channel is concatenated one after the other
+  /// <returns>SoundFile object</returns>
+  ///
+  type SoundFile (samplingRate: float, 
+                  bytesPerSample: int,
+                  isPCM: bool,
+                  samples: SampleSeq) =
+  
+    member f.SamplingRate = samplingRate
+    member f.BytesPerSample = bytesPerSample
+    member f.Samples = samples
+    member f.IsPCM = isPCM
+    member f.NumChannels = samples.NumChannels
+    member f.WriteWav path = streamSeqToWav (int f.SamplingRate) 
+                               f.BytesPerSample path f.Samples
 
-
+    static member ReadWav (path:string) = SoundFile (readWavFile path)

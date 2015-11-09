@@ -24,26 +24,30 @@ module Play =
   open System.IO
   open System.ComponentModel
 
-  ///
-  /// <summary>Play a Samples type using NAudio as a background job</summary>
-  /// <param name="sampleRate">sampling rate</param>
-  /// <param name="bitDepth">Bits per sample</param>
-  /// <param name="nChannel">number of channels</param>
-  /// <returns>unit</returns>
-  ///
-  let play sampleRate bitDepth nChannel (samples:Samples) =
-    let b = samplesToBytes samples
+  let playSampleSeq sampleRate bytesPerSample (samples:SampleSeq) =
     let worker = new BackgroundWorker()
+    let nChannel = samples.NumChannels
     worker.DoWork.Add( fun args ->
-      let format = WaveFormat(sampleRate, bitDepth, nChannel )
-      use memstream = new MemoryStream( b )
-      use wavestream = new RawSourceWaveStream( memstream, format )
+      let format = WaveFormat(sampleRate, bytesPerSample*8, nChannel )
+      use ms = new MemoryStream()
+      use writer = new BinaryWriter(ms)
+      let bytesWritten = packSampleSequence bytesPerSample writer samples
+      // reset stream position to 0
+      ms.Position <- 0L
+      use wavestream = new RawSourceWaveStream( ms, format )
       use wo = new WaveOut() 
       wo.Init(wavestream)
       wo.Play()
-      System.Threading.Thread.Sleep(samples.Length/sampleRate*1000)
+      System.Threading.Thread.Sleep(bytesWritten/nChannel/sampleRate*1000)
     )
     worker.RunWorkerAsync()
+
+  let play sampleRate bitDepth sequences =
+    match sequences with
+    | [] -> ()
+    | [mono] -> playSampleSeq sampleRate bitDepth (Mono mono)
+    | [left; right] -> playSampleSeq sampleRate bitDepth (Stereo (left, right))
+    | multi -> playSampleSeq sampleRate bitDepth (Multi multi)
 
   ///
   /// <summary>Plays a SoundFile using NAudio as a background job</summary>
@@ -51,7 +55,7 @@ module Play =
   /// <returns>unit</returns>
   ///
   let playSoundFile (sf: SoundFile) =
-    sf.Samples |> play (int sf.SamplingRate) sf.BitDepth sf.NumChannels 
+    sf.Samples |> playSampleSeq (int sf.SamplingRate) sf.BytesPerSample
 
   ///
   /// <summary>Plays a float array using ISampleProvider.  This is experimental

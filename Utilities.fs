@@ -127,11 +127,9 @@ module Utilities =
   /// <param name="waveform">the waveform function</param>
   ///
   let wavCd1 duration filename waveform =
-    waveform
-    |> generate 44100.0 duration
-    |> floatTo16
-    |> makeSoundFile 44100.0 1 16 true
-    |> toWav filename
+    [waveform]
+    |> List.map (generate 44100.0 duration)
+    |> streamToWav 44100 2 filename
 
   ///
   /// <summary>Yet another convenience function to play a wave function for a
@@ -143,11 +141,9 @@ module Utilities =
   /// <returns>unit</returns>
   ///
   let playWave sf duration waveFunc =
-    waveFunc
-    |> generate sf duration
-    |> floatTo16
-    |> makeSoundFile sf 1 16 true
-    |> playSoundFile
+    [waveFunc]
+    |> List.map (generate sf duration)
+    |> play (int sf) 2
 
   ///
   /// <summary>Implements a very crude model of the sound of waves by modulating
