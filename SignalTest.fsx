@@ -147,7 +147,7 @@ let test() =
   testNoise()
   testWave()
   testAdsr()
-  testRead()
+  if not (testRead()) then failwith "testRead() failed"
   testFilter()
 
 

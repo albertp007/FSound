@@ -138,7 +138,19 @@ module IO =
       | Mono _ -> 1
       | Stereo _ -> 2
       | Multi s -> Seq.length s
-     
+
+  ///
+  /// <summary>Converts a list of sequences to a SampleSeq object</summary>
+  /// <param name="sequences">List of sequences to be converted</param>
+  /// <returns>a SampleSeq object</returns>
+  ///     
+  let seqToSampleSeq sequences =
+    match sequences with
+    | [] -> failwith "List of sequences must not be empty"
+    | [mono] -> Mono mono
+    | [left; right] -> Stereo (left, right)
+    | multi -> Multi multi
+
   ///
   /// <summary>Converts raw bytes read from a wav file to SampleSeq object
   /// </summary>
@@ -158,11 +170,7 @@ module IO =
             yield raw.[j..(j+bytesPerSample-1)] |> bytesToFloat
         }
     }
-    match Seq.toList s with
-    | [] -> failwith "No channel"
-    | [mono] -> Mono mono
-    | [left; right] -> Stereo (left, right)
-    | multi -> Multi multi
+    Seq.toList s |> seqToSampleSeq
     
   ///
   /// <summary>Reads a PCM wave file and return a SoundFile object</summary>
@@ -391,7 +399,6 @@ module IO =
     member f.Samples = samples
     member f.IsPCM = isPCM
     member f.NumChannels = samples.NumChannels
-    member f.WriteWav path = streamSeqToWav (int f.SamplingRate) 
-                               f.BytesPerSample path f.Samples
-
+    member f.WriteWav path = 
+      streamSeqToWav (int f.SamplingRate) f.BytesPerSample path f.Samples
     static member ReadWav (path:string) = SoundFile (readWavFile path)
