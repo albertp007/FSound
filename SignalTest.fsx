@@ -28,10 +28,8 @@ open FSound.Utilities
 
 // Define your library scripting code here
 let testWaveform waveformGen path=
-  waveformGen
-  |> floatTo16
-  |> makeSoundFile 44100.0 1 16 true
-  |> toWav path
+  [waveformGen]
+  |> streamToWav 44100 2 path
 
 let testSinusoid() =
   testWaveform (sinusoidGenerator 20000.0 440.0 0.0 44100.0 2.0) 
@@ -78,13 +76,15 @@ let testSum() =
   testWaveform wf @"sum.wav"
 
 let testRead() =
-  let w1 = squareGenerator 20000.0 440.0 44100.0 2.0
-           |> floatTo16
-           |> makeSoundFile 44100.0 1 16 true
+  let gen = squareGenerator 20000.0 440.0 44100.0 2.0
+  let w1 = SoundFile(44100.0, 2, true, (Mono gen))
   let fileName = @"temp_square.wav"
   w1.WriteWav fileName
+  // read the file back in
   let w2 = SoundFile.ReadWav fileName
-  ( w1.Channels.[0] |> Seq.toArray ) = (w1.Channels.[0] |> Seq.toArray )
+  let (Mono m2) = w2.Samples
+  let m1 = Seq.map (fun s->float (int s)) gen
+  (m1 |> Seq.toArray ) = (m2 |> Seq.toArray )
 
 let testClip() =
   testWaveform (sinusoid 20000.0 256.0 0.0 >> clipper 16000.0 

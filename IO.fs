@@ -79,7 +79,7 @@ module IO =
   /// supported</summary>
   /// <param name="bytes">Array of bytes to convert to float</param>
   /// <returns>Float value converted from array of bytes</returns>
-  ///  
+  ///
   let bytesToFloat (bytes: byte[]) =
     let maxByte = 8
     let length = Array.length bytes
@@ -163,12 +163,13 @@ module IO =
     | [left; right] -> Stereo (left, right)
     | multi -> Multi multi
     
-
+  ///
   /// <summary>Reads a PCM wave file and return a SoundFile object</summary>
   /// <param name="path">Path of the file</param>
   /// <returns>a SoundFile object representing the data in the wav file. If the
   /// file has only one channel, then the first of the tuple in Data contains
   /// the data and the second of the tuple is empty</returns>
+  ///
   let readWavFile (path: string) =
     use fileStream = new System.IO.FileStream( path, System.IO.FileMode.Open )
     use reader = new System.IO.BinaryReader(fileStream)
@@ -217,7 +218,7 @@ module IO =
   /// be equal to number of samples times bytesPerSample * numChannels</param>
   /// <returns>unit</returns>
   ///
-  let private writeWavHeader samplingRate numChannels bytesPerSample 
+  let writeWavHeader samplingRate numChannels bytesPerSample 
     numBytes (writer:System.IO.BinaryWriter) =
     let chunkID = "RIFF"B
     let chunkSize = 36 + numBytes   // * seek and update after numBytes is known

@@ -24,6 +24,13 @@ module Play =
   open System.IO
   open System.ComponentModel
 
+  ///
+  /// <summary>Play a SampleSeq object using NAudio</summary>
+  /// <param name="sampleRate">Sampling frequency in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="samples">Sample sequence object to be played</param>
+  /// <returns>unit</returns>
+  ///
   let playSampleSeq sampleRate bytesPerSample (samples:SampleSeq) =
     let worker = new BackgroundWorker()
     let nChannel = samples.NumChannels
@@ -42,12 +49,21 @@ module Play =
     )
     worker.RunWorkerAsync()
 
-  let play sampleRate bitDepth sequences =
+  ///
+  /// <summary>Play a list of sequence of samples, each sequence represents a
+  /// channel</summary>
+  /// <param name="sampleRate">Sampling frequency in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="sequences">List of sequence of samples (float)</param>
+  /// <returns>unit</returns>
+  ///
+  let play sampleRate bytesPerSample sequences =
     match sequences with
     | [] -> ()
-    | [mono] -> playSampleSeq sampleRate bitDepth (Mono mono)
-    | [left; right] -> playSampleSeq sampleRate bitDepth (Stereo (left, right))
-    | multi -> playSampleSeq sampleRate bitDepth (Multi multi)
+    | [mono] -> playSampleSeq sampleRate bytesPerSample (Mono mono)
+    | [left; right] -> playSampleSeq sampleRate bytesPerSample 
+                         (Stereo (left, right))
+    | multi -> playSampleSeq sampleRate bytesPerSample (Multi multi)
 
   ///
   /// <summary>Plays a SoundFile using NAudio as a background job</summary>
