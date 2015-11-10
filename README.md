@@ -6,27 +6,47 @@ FSound is a library for processing sound using F#
 
 Here are some of the things you can do with FSound:
 
-* Generate a .wav file containing a sawtooth wave of amplitude 10000, 440Hz, 
-sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
+* Generate a .wav file containing a single channel of sawtooth wave of amplitude 10000, 440Hz, 
+sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 seconds
   
   ```
   open FSound.Signal;;
   open FSound.IO;;
   
-  saw 10000.0 440.0
-  |> generate 44100.0 2.0
-  |> floatTo16
-  |> makeSoundFile 44100.0 1 16 true
-  |> toWav @"blah.wav";;
+  [saw 10000.0 440.0] 
+  |> List.map (generate 44100.0 2.0) 
+  |> streamToWav 44100 2 @"blah.wav";;
   ```
 
-* Play a triangular wave of amplitude 10000, 440Hz, sampling rate 44100Hz, 1 channel and which lasts for 2 seconds
+* Generate a .wav file containing a triangular wave in the left channel and white noise on the right channel
+
+  ```
+  open FSound.Signal;;
+  open FSound.IO;;
+  
+  [triangle 10000.0 440.0; whiteNoise 10000.0]
+  |> List.map (generate 44100.0 2.0)
+  |> streamToWav 44100 2 @"blah.wav";;
+  ```
+  
+* Play a single channel of triangular wave of amplitude 10000, 440Hz, sampling rate 44100Hz, 1 channel and which lasts for 2 seconds
   
   ```
   open FSound.Signal;;
   open FSound.Utilities;;
   
   triangle 10000.0 440.0 |> playWave 44100.0 2.0;;
+  ```
+  
+* Play a triangular wave in the left channel and white noise in the right channel. ('playWave' above is a convenience function which calls the more general 'play' function which plays an arbitrary of channels, to first generate a signal and then play it in a single channel)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Play;;
+  
+  [triangle 10000.0 440.0; whiteNoise 10000.0]
+  |> List.map (generate 44100.0 2.0)
+  |> play 44100 2;;
   ```
 
 * Add an ADSR envelope to the triangular wave above
@@ -47,7 +67,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Utilities;;
   
   modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  >> delay 44100.0 2.0 200.0 0.15 0.5
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
   |> playWave 44100.0 1.0;;
   ```
   
@@ -59,7 +79,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Utilities;;
   
   modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  >> delay 44100.0 2.0 200.0 0.15 0.5
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
   |> playWave 44100.0 1.0;;
   ```
 
@@ -106,7 +126,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (whiteNoise 10000.0) (lfo 0.05 0.8)
+  modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8)
   >> lp 44100.0 220.0
   |> playWave 44100.0 50.0;;
   ```
@@ -143,7 +163,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Utilities;;
   saw 10000.0 440.0
   >> flanger 44100.0 7.0 0.15 0.5 0.2
-  |> playWave 44100.0 10.0
+  |> playWave 44100.0 10.0;;
   ```
 
 * Flanging on white noise
@@ -164,7 +184,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter;;
   open FSound.Utilities;;
   modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
-  >> delay 44100.0 2.0 200.0 0.9 0.5
+  >> delay 44100.0 2.0 200.0 1.0 0.9 0.5
   |> playWave 44100.0 10.0;;
   ```
   
@@ -175,7 +195,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Filter;;
   open FSound.Utilities;;
   modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
-  >> delay 4410.0 2.0 200.0 0.9 0.5
+  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
   |> playWave 44100.0 2.0;;  
   ```
   
@@ -186,31 +206,11 @@ sampling rate 44100Hz, 1 channel, 16-bit sample and which lasts for 2 seconds
   open FSound.Signal;;
   open FSound.Filter;;
   [modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
-  >> delay 4410.0 2.0 200.0 0.9 0.5 
+  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5 
   |> generate 44100.0 2.0 ]
   |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\blah.wav";;
   ```
 
-* Streaming two sequences of samples as left and right channel to a wav file
-
-  ```
-  open FSound.IO;;
-  open FSound.Signal;;
-  [sinusoid 10000.0 440.0 0.0; sinusoid 10000.0 445.0 0.0] 
-  |> List.map (generate 44100.0 5.0) 
-  |> streamToWavMultiple 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
-  ```
-
-* A  more memory-efficient version of function to stream two sequences of samples as left and right channel to a wav file (Use streamToWav which will choose the more efficient function to call according to the number of channels)
-
-  ```
-  open FSound.IO;;
-  open FSound.Signal;;
-  (sinusoid 10000.0 440.0 0.0, sinusoid 10000.0 445.0 0.0)
-  |> pairMap (generate 44100.0 5.0) 
-  |> streamToWavLR 44100 2 @"C:\Users\panga\project\FSound\stereo.wav";;
-  ```
-  
 * A crude implementation of the plucked string using Karplus-Strong algorithm.  (Attenuation/Decay cannot be controlled at the moment)
 
   ```
