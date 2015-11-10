@@ -25,6 +25,8 @@ open FSound.Signal
 open FSound.IO
 open FSound.Filter
 open FSound.Utilities
+open FSound.Play
+open FSound.Plot
 
 // Define your library scripting code here
 let testWaveform waveformGen path=
@@ -90,6 +92,11 @@ let testClip() =
   testWaveform (sinusoid 20000.0 256.0 0.0 >> clipper 16000.0 
                 |> generate 44100.0 5.0) @"clip.wav"
 
+let playWave sf t waveFunc =
+  let sleep (tau:int) = System.Threading.Thread.Sleep tau
+  FSound.Utilities.playWave sf t waveFunc
+  sleep (((int t) + 1) * 1000)
+  
 let funny() =
   let adsr1 = adsr 0.05 1.0 0.05 0.3 0.1 0.05
   let sleep (tau:int) = System.Threading.Thread.Sleep tau
@@ -139,6 +146,122 @@ let funny() =
   >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
   |> playDuration 2.0
 
+let generateSawAndStreamToWav() =
+  [saw 10000.0 440.0] 
+  |> List.map (generate 44100.0 2.0) 
+  |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\saw-440.wav"
+
+let generateStereoAndStreamToWav() =
+  [triangle 10000.0 440.0; whiteNoise 10000.0]
+  |> List.map (generate 44100.0 2.0)
+  |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\saw-noise.wav"
+
+let playTriangle() =
+  triangle 10000.0 440.0 |> playWave 44100.0 2.0
+
+let playStereo() =
+  [triangle 10000.0 440.0; whiteNoise 10000.0]
+  |> List.map (generate 44100.0 2.0)
+  |> play 44100 2
+
+let modulateWithAdsr() =
+  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  |> playWave 44100.0 1.0
+
+let modulateTriangleAdsrDelay() =
+  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
+  |> playWave 44100.0 1.0
+
+let modulateNoiseAdsrDelay() =
+  modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
+  |> playWave 44100.0 1.0
+
+let noiseSmithAngell() =
+  whiteNoise 50000.0
+  >> smithAngell 44100.0 440.0 10.0
+  |> playWave 44100.0 2.0
+
+let noiseSmithAngellAdsr() =
+  modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> smithAngell 44100.0 880.0 10.0
+  |> playWave 44100.0 2.0
+
+let noiseHp() =
+  whiteNoise 10000.0 
+  >> hp 44100.0 10000.0
+  |> playWave 44100.0 1.0
+
+let noiseLfo() =
+  modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8)
+  >> lp 44100.0 220.0
+  |> playWave 44100.0 50.0
+
+let noiseLpPlot() =
+  whiteNoise 10000.0
+  >> lp 44100.0 220.0
+  |> generate 44100.0 1.0
+  |> plotFreq 20000
+
+let triangleVibrato() =
+  triangle 10000.0 440.0 
+  >> vibrato 44100.0 7.0 2.0 
+  |> playWave 44100.0 5.0
+
+let sawFlanger() =
+  saw 10000.0 440.0
+  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  |> playWave 44100.0 10.0
+
+let noiseFlanger() =
+  whiteNoise 10000.0
+  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  |> playWave 44100.0 10.0
+
+let sawChorusAdsrDelay() =
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 44100.0 2.0 200.0 1.0 0.9 0.5
+  |> playWave 44100.0 10.0
+
+let typoSawChorusAdsrDelay() =
+  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
+  |> playWave 44100.0 2.0
+
+let streamToWavTest() =
+  [modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5 
+  |> generate 44100.0 2.0 ]
+  |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\square-chorus-adsr-delay.wav"
+
+let karplusStrong() =
+  pluck2LevelRandom 10000.0 44100.0 256.0 |> playWave 44100.0 5.0
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0 |> playWave 44100.0 5.0
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0 |> playWave 44100.0 5.0
+  pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 |> playWave 44100.0 5.0
+
+let readmeExamples() =
+  generateSawAndStreamToWav()
+  generateStereoAndStreamToWav()
+  playTriangle()
+  playStereo()
+  modulateWithAdsr()
+  modulateTriangleAdsrDelay()
+  modulateNoiseAdsrDelay()
+  noiseSmithAngell()
+  noiseSmithAngellAdsr()
+  noiseHp()
+  noiseLfo()
+  noiseLpPlot() |> ignore
+  triangleVibrato()
+  sawFlanger()
+  noiseFlanger()
+  sawChorusAdsrDelay()
+  typoSawChorusAdsrDelay()
+  streamToWavTest()
+  karplusStrong()
+
 let test() =
   testSinusoid()
   testSquare()
@@ -147,6 +270,7 @@ let test() =
   testNoise()
   testWave()
   testAdsr()
+  readmeExamples()
   if not (testRead()) then failwith "testRead() failed"
   testFilter()
 
