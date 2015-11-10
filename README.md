@@ -126,7 +126,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (whiteNoise 10000.0) (lfo 0.05 0.8)
+  modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8)
   >> lp 44100.0 220.0
   |> playWave 44100.0 50.0;;
   ```
