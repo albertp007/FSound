@@ -46,7 +46,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   
   [triangle 10000.0 440.0; whiteNoise 10000.0]
   |> List.map (generate 44100.0 2.0)
-  |> play 44100 2
+  |> play 44100 2;;
+  ```
 
 * Add an ADSR envelope to the triangular wave above
   
