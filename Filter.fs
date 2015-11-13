@@ -165,8 +165,8 @@ module Filter =
     fun sample ->
       let yn = 
         if delayNumSamples = 0 && fractionalDelay = 0.0 then sample 
-        else cubicInterpolate (buffer.GetOffset -1) (buffer.Get()) 
-               (buffer.GetOffset 1) (buffer.GetOffset 2) fractionalDelay
+        else cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] 
+               fractionalDelay
       let xn = sample
       buffer.Push (gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
@@ -204,7 +204,7 @@ module Filter =
       // printfn "frac: %f d: %f d': %f x0: %f x1: %f v: %f" frac d d' (buffer.Get() )
       //  (buffer.GetOffset 1) (buffer.Get() * (1.0 - frac) + (buffer.GetOffset 1) * frac)
       let yn = if abs (d - 1.0) < 0.0000001 then sample else 
-                 buffer.Get() * (1.0 - frac) + (buffer.GetOffset 1) * frac
+                 buffer.[0] * (1.0 - frac) + (buffer.[1]) * frac
       let xn = sample
       buffer.Push (gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
@@ -272,8 +272,8 @@ module Filter =
     let lag = nSample
     let wavetable = CircularBuffer(nSample, lag, initBufferFunc)
     fun (_:float) -> 
-      let output = wavetable.Get()
-      let y = 0.5*(wavetable.Get() + wavetable.GetOffset(-1))
+      let output = wavetable.[0]
+      let y = 0.5*(wavetable.[0] + wavetable.[-1])
       let y' = if blend = 1.0 then y else 
                 (if random2.NextDouble() <= blend then 1.0 else -1.0) * y
       wavetable.Push(y')

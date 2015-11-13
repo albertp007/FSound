@@ -73,6 +73,11 @@ module Data =
     ///
     member t.GetOffset n = buffer.[(calcPos n posR)]
     ///
+    /// <summary>Indexer relative to the current read pointer.  Syntactic sugar
+    /// for Get() and GetOffset(n)</summary>
+    ///
+    member t.Item idx = if idx = 0 then t.Get() else t.GetOffset(idx)
+    ///
     /// <summary>Returns a copy of the buffer as an array</summary>
     ///
     member t.GetBuffer() = buffer
@@ -111,7 +116,7 @@ module Data =
   type MovingWindow<'T> (init:seq<'T>) =
     let window = Queue<'T>(init)
     let size = window.Count
-    do printfn "New instance of MovingWindow"
+    // do printfn "New instance of MovingWindow"
     ///
     /// <summary>Push an item into the window. If the queue is already full,
     /// an item will first be dequeued before the new item is pushed into it
