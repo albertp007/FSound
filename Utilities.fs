@@ -136,12 +136,12 @@ module Utilities =
   /// given duration in seconds, just to save some typing</summary>
   /// <param name="sf">sampling frequency</param>
   /// <param name="duration">duration in number of seconds</param>
-  /// <param name="waveFunc">the waveform function which takes a time t as
+  /// <param name="waveFuncs">list of waveform functions which takes a time t as
   /// argument and return a sample</param>
   /// <returns>unit</returns>
   ///
-  let playWave sf duration waveFunc =
-    [waveFunc]
+  let playWave sf duration waveFuncs =
+    waveFuncs
     |> List.map (generate sf duration)
     |> play (int sf) 2
 
