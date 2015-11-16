@@ -22,7 +22,6 @@ module Play =
   open NAudio.Wave
   open FSound.IO
   open System.IO
-  open System.ComponentModel
 
   ///
   /// <summary>Play a SampleSeq object using NAudio</summary>
@@ -31,10 +30,9 @@ module Play =
   /// <param name="samples">Sample sequence object to be played</param>
   /// <returns>unit</returns>
   ///
-  let playSampleSeq sampleRate bytesPerSample (samples:SampleSeq) =
-    let worker = new BackgroundWorker()
-    let nChannel = samples.NumChannels
-    worker.DoWork.Add( fun args ->
+  let playSampleSeq sampleRate bytesPerSample (samples:SampleSeq) =    
+    async {
+      let nChannel = samples.NumChannels
       let format = WaveFormat(sampleRate, bytesPerSample*8, nChannel )
       use ms = new MemoryStream()
       use writer = new BinaryWriter(ms)
@@ -45,9 +43,8 @@ module Play =
       use wo = new WaveOut() 
       wo.Init(wavestream)
       wo.Play()
-      System.Threading.Thread.Sleep(bytesWritten/nChannel/sampleRate*1000)
-    )
-    worker.RunWorkerAsync()
+      do! Async.Sleep(bytesWritten/nChannel/sampleRate*1000)
+    } |> Async.Start
 
   ///
   /// <summary>Play a list of sequence of samples, each sequence represents a
@@ -81,7 +78,6 @@ module Play =
   /// <returns>unit</returns>
   ///
   let play2 sampleRate (samples:float[]) =
-    let worker = new BackgroundWorker()
     let duration = samples.Length/sampleRate
     let posRead = ref 0
     let provider = {
@@ -97,10 +93,9 @@ module Play =
         member p.WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 
                                                                     1)
     }
-    worker.DoWork.Add( fun _ ->
+    async {
       use wo = new WaveOut()
       wo.Init(SampleProviders.SampleToWaveProvider16(provider)) 
       wo.Play()
-      System.Threading.Thread.Sleep(duration*1000)
-    )
-    worker.RunWorkerAsync()
+      do! Async.Sleep(duration*1000)
+    } |> Async.Start
