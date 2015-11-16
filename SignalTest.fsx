@@ -242,15 +242,27 @@ let streamToWavTest() =
 let karplusStrong() =
   [pluck2LevelRandom 10000.0 44100.0 256.0]
   |> playWave 44100.0 5.0 @"samples\karplusStrong.wav"
+  [pluck2LevelRandom 10000.0 44100.0 256.0]
+  |> List.map (generate 44100.0 5.0)
+  |> streamToWav 44100 2 @"samples\karplusStrong.wav"
 
   [pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0]
   |> playWave 44100.0 5.0 @"samples\karplusStrongVibrato.wav"
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0]
+  |> List.map (generate 44100.0 5.0)
+  |> streamToWav 44100 2 @"samples\karplusStrongVibrato.wav"
 
   [pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0]
   |> playWave 44100.0 5.0 @"samples\karplusStrongChorus.wav"
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0]
+  |> List.map (generate 44100.0 5.0)
+  |> streamToWav 44100 2 @"samples\karplusStrongChorus.wav"
 
   [pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2]
   |> playWave 44100.0 5.0 @"samples\karplusStrongFlanger.wav"
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2]
+  |> List.map (generate 44100.0 5.0)
+  |> streamToWav 44100 2 @"samples\karplusStrongFlanger.wav"
 
 let readmeExamples() =
   generateSawAndStreamToWav()
