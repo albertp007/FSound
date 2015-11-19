@@ -27,6 +27,9 @@ module Utilities =
   open FSound.Signal
   open FSound.Filter
   open FSound.Play
+  open NAudio.Lame
+  open NAudio.Wave
+  open System.IO
 
   ///
   /// <summary>Folding with an index</summary>
@@ -169,3 +172,20 @@ module Utilities =
   let windSimulator a =
     ((modulate (whiteNoise 20000.0) (lfo 0.05 0.0 0.8)) 
     >> smithAngell 44100.0 880.0 10.0)
+
+  ///
+  /// <summary>Convert a wav file to mp3 file using the Lame dll.  NB: This
+  /// function requires the lame DLL to be in the search path.  The Lame dlls
+  /// are in the content directory within the package</summary>
+  /// <param name="wavPath">Path of the wav file to be converted</param>
+  /// <param name="mp3Path">Path of the mp3 file to be generated.  Note that
+  /// any existing file with the same name will be overridden</param>
+  /// <returns>unit</returns>
+  /// 
+  let wavToMp3 (wavPath:string) (mp3Path:string) =
+    use wavStream = new FileStream( wavPath, FileMode.Open )
+    use output = new FileStream( mp3Path, FileMode.Create )
+    use wavReader = new WaveFileReader( wavStream )
+    use lameWriter = new LameMP3FileWriter( output, wavReader.WaveFormat, 128)
+    wavReader.CopyTo( lameWriter )
+

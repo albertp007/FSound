@@ -27,6 +27,11 @@ open FSound.Filter
 open FSound.Utilities
 open FSound.Play
 open FSound.Plot
+open System
+
+Environment.SetEnvironmentVariable("Path",
+    Environment.GetEnvironmentVariable("Path") + ";" + __SOURCE_DIRECTORY__ +
+    @"\packages\NAudio.Lame.1.0.3\content")
 
 // Define your library scripting code here
 let testWaveform waveformGen path=
@@ -264,6 +269,15 @@ let karplusStrong() =
   |> List.map (generate 44100.0 5.0)
   |> streamToWav 44100 2 @"samples\karplusStrongFlanger.wav"
 
+let convertWavToMp3 directory =
+  
+  let makeMp3Path wavPath =
+    System.IO.Path.GetDirectoryName(wavPath) + @"\" +
+    System.IO.Path.GetFileNameWithoutExtension(wavPath) + @".mp3"
+
+  System.IO.Directory.GetFiles(directory, @"*.wav")
+  |> Array.iter (fun input -> wavToMp3 input (makeMp3Path input))
+  
 let readmeExamples() =
   generateSawAndStreamToWav()
   generateStereoAndStreamToWav()
@@ -284,6 +298,7 @@ let readmeExamples() =
   typoSawChorusAdsrDelay()
   streamToWavTest()
   karplusStrong()
+  convertWavToMp3(__SOURCE_DIRECTORY__+ @"\samples")
 
 let test() =
   testSinusoid()
