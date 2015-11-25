@@ -269,6 +269,14 @@ let karplusStrong() =
   |> List.map (generate 44100.0 5.0)
   |> streamToWav 44100 2 @"samples\karplusStrongFlanger.wav"
 
+let cMajor7() =
+  let gen pitch = modulate (triangle 15000.0 pitch) 
+                    (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  // natural tuning
+  let (c, e, g, b) = (gen 256.0, gen 320.0, gen 384.0, gen 480.0)
+  [ arrange [(0.0, c); (0.0, e); (0.0, g); (0.0, b)] ]
+  |> playWave 44100.0 1.0 @"samples\cmajor7.wav"
+
 let convertWavToMp3 directory =
   
   let makeMp3Path wavPath =
@@ -298,6 +306,7 @@ let readmeExamples() =
   typoSawChorusAdsrDelay()
   streamToWavTest()
   karplusStrong()
+  cMajor7()
   convertWavToMp3(__SOURCE_DIRECTORY__+ @"\samples")
 
 let test() =
