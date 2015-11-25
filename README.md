@@ -225,6 +225,16 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 |> playWave 44100.0 5.0;;
   ```
   
+* Arrange a list of generators to be played at particular time offset.  The following plays the C maj7 chord - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/cmajor7.mp3)
+
+  ```
+  let gen pitch = modulate (triangle 15000.0 pitch) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  // natural tuning
+  let (c, e, g, b) = (gen 256.0, gen 320.0, gen 384.0, gen 480.0)
+  [ arrange [(0.0, c); (0.0, e); (0.0, g); (0.0, b)] ]
+  |> playWave 44100.0 1.0
+  ```
+  
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#
