@@ -239,3 +239,23 @@ module Signal =
   ///
   let triangleGenerator a f sf tau =
     triangle a f |> generate sf tau
+
+  ///
+  /// <summary>A signal generator which arranges a sequence of other signal
+  /// generators to be played at a specific time.  As this is actually a signal
+  /// generator itself, it returns a function which takes one parameter t and
+  /// returns the value of the sample at t by summing up the value generated
+  /// by all the generators at time t</summary>
+  /// <param name="generatorAtTimeList">List of pairs of (timeOffset, generator)
+  /// The timeOffset is in seconds and the generator is simply another signal
+  /// generator which takes a time parameter.  The generator will generate a
+  /// value only at a time after timeOffset seconds.  For all time t before
+  /// timeOffset, the value generated is 0.0, which means the particular
+  /// generator is silent</param>
+  /// <param name="t">Time in seconds<param>
+  /// <returns>The sum of the sample value of each arranged generators at time t
+  /// </returns>
+  ///
+  let arrange generatorAtTimeList t =
+    let c (f:float->float) = fun s -> if s < 0.0 then 0.0 else f s
+    Seq.fold (fun v (s, gen) -> v + (c gen) (t - s)) 0.0 generatorAtTimeList
