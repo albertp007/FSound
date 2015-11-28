@@ -27,9 +27,6 @@ module Filter =
   open FSound.IO
   open FSound.Signal
 
-  let private random = System.Random()
-  let private random2 = System.Random()
-
   ///
   /// <summary>Filter with feedforward and feedback coefficients
   /// y(n) = ff0 * x(n) + ff1 * x(n-1) + ... + ffm * x(n-m) -
@@ -268,6 +265,7 @@ module Filter =
   /// </returns>
   ///
   let pluckInitBuffer a (fs:float) f blend (initBufferFunc:(int->float)) =
+    let random = System.Random()
     let nSample = (int (round fs/f))
     let lag = nSample
     let wavetable = CircularBuffer(nSample, lag, initBufferFunc)
@@ -275,7 +273,7 @@ module Filter =
       let output = wavetable.[0]
       let y = 0.5*(wavetable.[0] + wavetable.[-1])
       let y' = if blend = 1.0 then y else 
-                (if random2.NextDouble() <= blend then 1.0 else -1.0) * y
+                (if random.NextDouble() <= blend then 1.0 else -1.0) * y
       wavetable.Push(y')
       output
 
@@ -286,6 +284,7 @@ module Filter =
   /// <returns>Init function for an array</returns>
   ///
   let init2LevelRandom a =
+    let random = System.Random()
     fun _ -> (if random.Next(2) = 0 then -1.0 else 1.0) * a
 
   ///

@@ -26,8 +26,6 @@ module Signal =
   open FSound.Data
   open FSound.IO
 
-  let private random = System.Random()
-
   ///
   /// <summary>Generates a sequence of samples given a sampling frequency, the
   /// duration (in seconds) required and a waveform function which returns the
@@ -59,7 +57,9 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let whiteNoise a (t:float) = 2.0 * a * (random.NextDouble() - 0.5)
+  let whiteNoise a (t:float) =
+    let random = System.Random()
+    2.0 * a * (random.NextDouble() - 0.5)
 
   ///
   /// <summary>Square waveform function</summary>
