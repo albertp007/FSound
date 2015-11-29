@@ -268,7 +268,3 @@ module Signal =
         if s < 0.0 then 0.0
         else f s
     Seq.fold (fun v (s, gen) -> v + (c gen) (t - s)) 0.0 generatorAtTimeList
-  
-  let genRandom i = 
-    let random = System.Random()
-    random.NextDouble()
