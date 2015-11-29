@@ -20,26 +20,25 @@
 //
 namespace FSound
 
-module Plot =
-
+module Plot = 
   open FSharp.Charting
   open FSound.Utilities
   open FSound.Filter
-
+  
   //
   // <summary>Run FFT on signal and plot frequency content using FSharp.Charting
   // </summary>
   // <param name="signal">Sequence of floats representing the samples</param>
   // <returns>unit</returns>
   //
-  let plotFreq toFreq samples =
+  let plotFreq toFreq samples = 
     samples
     |> fft
     |> magnitudes
     |> Seq.take toFreq
     |> Chart.Point
     |> fun c -> c.ShowChart()
-
+  
   ///
   /// <summary>Generate impulse response of a given length and pass through
   /// the filter.  Plot the response using FSharp.Charting</summary>
@@ -48,7 +47,7 @@ module Plot =
   /// <param name="filter">filter function</param>
   /// <returns>unit</returns>
   ///
-  let plotImpulse n filter =
+  let plotImpulse n filter = 
     impulseResponse n filter
     |> Chart.Point
     |> fun c -> c.ShowChart()

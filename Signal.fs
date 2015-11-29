@@ -20,12 +20,13 @@
 //
 namespace FSound
 
-module Signal =
-
+module Signal = 
   open MathNet.Numerics.LinearAlgebra.Double
   open FSound.Data
   open FSound.IO
-
+  
+  let private random = System.Random()
+  
   ///
   /// <summary>Generates a sequence of samples given a sampling frequency, the
   /// duration (in seconds) required and a waveform function which returns the
@@ -36,9 +37,11 @@ module Signal =
   /// <returns>Sequence of floats representing the sequence of samples generated
   /// </returns>
   ///
-  let generate sf tau waveFunc =
-    seq { for t in 0.0..(1.0/sf)..tau -> waveFunc t }
-
+  let generate sf tau waveFunc = 
+    seq { 
+      for t in 0.0..(1.0 / sf)..tau -> waveFunc t
+    }
+  
   ///
   /// <summary>Sinusoid waveform function</summary>
   /// <param name="a">amplitude</param>
@@ -47,20 +50,25 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let sinusoid a f ph t =
+  let sinusoid a f ph t = 
     let pi = System.Math.PI
-    a * cos (2.0*pi*f*t + ph)
-
+    a * cos (2.0 * pi * f * t + ph)
+  
   ///
   /// <summary>White noise waveform function</summary>
   /// <param name="a">amplitude</param>
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let whiteNoise a (t:float) =
-    let random = System.Random()
-    2.0 * a * (random.NextDouble() - 0.5)
-
+  let whiteNoise a (t : float) = 
+    /// The random number generator needs to be outside of the scope of this
+    /// function in order for calling it in a seq expression to actually
+    /// generate a different number every time.  If the random number generator
+    /// is defined within the scope of this function, then calling it in a
+    /// sequence expression will actually generate a sequence of the same number
+    /// Looks like there is a binding somewhere which I am not able to understand
+    2.0 * a * (random.NextDouble() - 0.5) + t * 0.0
+  
   ///
   /// <summary>Square waveform function</summary>
   /// <param name="a">amplitude</param>
@@ -68,10 +76,11 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let square (a:float) (f:float) (t:float) =
-    let i = int ( 2.0 * f * t ) 
-    if i % 2 = 0 then a else (-a)
-
+  let square (a : float) (f : float) (t : float) = 
+    let i = int (2.0 * f * t)
+    if i % 2 = 0 then a
+    else (-a)
+  
   ///
   /// <summary>Saw-tooth waveform function</summary>
   /// <param name="a">amplitude</param>
@@ -79,11 +88,11 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let saw (a:float) (f:float) (t:float) =
-    let cycle = int ( f * t )
-    let tau = t - float ( cycle ) / f
+  let saw (a : float) (f : float) (t : float) = 
+    let cycle = int (f * t)
+    let tau = t - float (cycle) / f
     -a + 2.0 * a * f * tau
-
+  
   ///
   /// <summary>Triangular waveform function</summary>
   /// <param name="a">amplitude</param>
@@ -91,18 +100,19 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
-  let triangle (a:float) (f:float) (t:float) =
-    let cycle = int ( 4.0 * f * t )
+  let triangle (a : float) (f : float) (t : float) = 
+    let cycle = int (4.0 * f * t)
     let tau = t - float (cycle) / 4.0 / f
     let abs_m = 4.0 * a * f
-    let (intercept, slope) =
+    
+    let (intercept, slope) = 
       match cycle % 4 with
       | 0 -> (0.0, abs_m)
       | 1 -> (a, -abs_m)
       | 2 -> (0.0, -abs_m)
       | _ -> (-a, abs_m)
     intercept + tau * slope
-
+  
   ///
   /// <summary>Modulator function which multiplies two signals at time t
   /// </summary>
@@ -111,10 +121,10 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>the value of multipliying the value of the primary waveform at 
   /// time t and the value of the modulator waveform at time t</returns>
-  ///    
-  let modulate (waveform:float->float) (modulator:float->float) (t: float) =
-    (waveform t) * (modulator t)
-
+  ///
+  let modulate (waveform : float -> float) (modulator : float -> float) 
+      (t : float) = (waveform t) * (modulator t)
+  
   ///
   /// <summary>Sums a sequence of waveform functions at time t</summary>
   /// <param name="waveforms">Sequence of waveform functions</param>
@@ -122,9 +132,9 @@ module Signal =
   /// <returns>the value of summing the value of all the waveform functions in
   /// the list at time t</returns>
   ///
-  let sum waveforms (t:float) =
+  let sum waveforms (t : float) = 
     Seq.fold (fun acc wf -> acc + wf t) 0.0 waveforms
-
+  
   ///
   /// <summary>Low frequency oscillator</summary>
   /// <param name="f">Frequency(Hz)</param>
@@ -135,11 +145,11 @@ module Signal =
   /// signal to go to zero</param>
   /// <param name="t">time in seconds</param>
   /// <returns>value of the lfo at time t</returns>
-  let lfo f phase depth t =
+  let lfo f phase depth t = 
     // short circuit for depth = 0.0
-    if depth = 0.0 then 1.0 else
-      ((sinusoid 1.0 f phase t) + 1.0) * 0.5 * depth + (1.0 - depth)
-
+    if depth = 0.0 then 1.0
+    else ((sinusoid 1.0 f phase t) + 1.0) * 0.5 * depth + (1.0 - depth)
+  
   ///
   /// <summary>ADSR envelope</summary>
   /// <param name="at_t">Duration of attack (sec)</param>
@@ -152,35 +162,36 @@ module Signal =
   /// <param name="t">time in seconds</param>
   /// <returns>Value of the ADSR envelope at time t</returns>
   ///
-  let adsr at_t at_level decay_t sus_perc sus_t release_t t =
+  let adsr at_t at_level decay_t sus_perc sus_t release_t t = 
     let sus_level = at_level * sus_perc
     let attack_start = 0.0
     let decay_start = at_t
     let suspend_start = decay_start + decay_t
     let release_start = suspend_start + sus_t
     let release_end = release_start + release_t
-    let (intercept, slope, start_point) =
+    
+    let (intercept, slope, start_point) = 
       match t with
-      | t when t >= attack_start && t < decay_start-> 
-        (0.0, at_level/at_t, attack_start)
+      | t when t >= attack_start && t < decay_start -> 
+        (0.0, at_level / at_t, attack_start)
       | t when t >= decay_start && t < suspend_start -> 
-          (at_level, (sus_perc-1.0)*at_level/decay_t, decay_start)
+        (at_level, (sus_perc - 1.0) * at_level / decay_t, decay_start)
       | t when t >= suspend_start && t < release_start -> 
-          (sus_level, 0.0, suspend_start)
-      | t when t >= release_start && t < release_end ->
-          (sus_level, -sus_level/release_t, release_start )
+        (sus_level, 0.0, suspend_start)
+      | t when t >= release_start && t < release_end -> 
+        (sus_level, -sus_level / release_t, release_start)
       | _ -> (0.0, 0.0, release_end)
-    (t - start_point)*slope + intercept
-       
+    (t - start_point) * slope + intercept
+  
   ///
   /// <summary>Hard-clips a sample</summary>
   /// <param name="level">the level the sample is going to be clipped at</param>
   /// <returns>the value of the sample after clipping
   ///
-  let clipper level (s:float) =
+  let clipper level (s : float) = 
     let l' = abs level
     min (max -l' s) l'
-
+  
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
@@ -190,9 +201,8 @@ module Signal =
   /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let sinusoidGenerator a f ph sf tau =
-    sinusoid a f ph |> generate sf tau
-
+  let sinusoidGenerator a f ph sf tau = sinusoid a f ph |> generate sf tau
+  
   ///
   /// <summary>Convenience function which combines whitenoise waveform with
   /// the generate function</summary>
@@ -201,9 +211,8 @@ module Signal =
   /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let whiteNoiseGenerator a sf tau =
-    whiteNoise a |> generate sf tau
-
+  let whiteNoiseGenerator a sf tau = whiteNoise a |> generate sf tau
+  
   ///
   /// <summary>Convenience function which combines square waveform with
   /// the generate function</summary>
@@ -213,9 +222,8 @@ module Signal =
   /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let squareGenerator a f sf tau =
-    square a f |> generate sf tau
-
+  let squareGenerator a f sf tau = square a f |> generate sf tau
+  
   ///
   /// <summary>Convenience function which combines saw-tooth waveform with
   /// the generate function</summary>
@@ -225,9 +233,8 @@ module Signal =
   /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let sawGenerator a f sf tau =
-    saw a f |> generate sf tau
-
+  let sawGenerator a f sf tau = saw a f |> generate sf tau
+  
   ///
   /// <summary>Convenience function which combines triangular waveform with
   /// the generate function</summary>
@@ -237,9 +244,8 @@ module Signal =
   /// <param name="tau">duration of the samples to be generated</param>
   /// <returns>Sequence of samples</returns>
   ///
-  let triangleGenerator a f sf tau =
-    triangle a f |> generate sf tau
-
+  let triangleGenerator a f sf tau = triangle a f |> generate sf tau
+  
   ///
   /// <summary>A signal generator which arranges a sequence of other signal
   /// generators to be played at a specific time.  As this is actually a signal
@@ -256,6 +262,13 @@ module Signal =
   /// <returns>The sum of the sample value of each arranged generators at time t
   /// </returns>
   ///
-  let arrange generatorAtTimeList t =
-    let c (f:float->float) = fun s -> if s < 0.0 then 0.0 else f s
+  let arrange generatorAtTimeList t = 
+    let c (f : float -> float) = 
+      fun s -> 
+        if s < 0.0 then 0.0
+        else f s
     Seq.fold (fun v (s, gen) -> v + (c gen) (t - s)) 0.0 generatorAtTimeList
+  
+  let genRandom i = 
+    let random = System.Random()
+    random.NextDouble()
