@@ -263,6 +263,13 @@ let cMajor7() =
               (0.0, b) ] ]
   |> playWave 44100.0 1.0 @"samples\cmajor7.wav"
 
+let pingPong() =
+  let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  multiplex (i 256.0) (i 384.0) >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5 
+  |> generate 44100.0 5.0 
+  |> demultiplex 
+  |> streamToWav 44100 2 @"samples\pingpong.wav";;
+
 let convertWavToMp3 directory = 
   let makeMp3Path wavPath = 
     System.IO.Path.GetDirectoryName(wavPath) + @"\" 
@@ -291,6 +298,7 @@ let readmeExamples() =
   streamToWavTest()
   karplusStrong()
   cMajor7()
+  pingPong()
   convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
 
 let test() = 

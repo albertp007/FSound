@@ -155,7 +155,7 @@ module IO =
   /// <summary>Converts a list of sequences to a SampleSeq object</summary>
   /// <param name="sequences">List of sequences to be converted</param>
   /// <returns>a SampleSeq object</returns>
-  ///     
+  ///
   let seqToSampleSeq sequences = 
     match sequences with
     | [] -> failwith "List of sequences must not be empty"

@@ -232,7 +232,20 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   // natural tuning
   let (c, e, g, b) = (gen 256.0, gen 320.0, gen 384.0, gen 480.0)
   [ arrange [(0.0, c); (0.0, e); (0.0, g); (0.0, b)] ]
-  |> playWave 44100.0 1.0
+  |> playWave 44100.0 1.0;;
+  ```
+
+* Ping pong delay - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/pingpong.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Play;;
+  let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  multiplex (i 256.0) (i 384.0) >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5 
+  |> generate 44100.0 5.0 
+  |> demultiplex 
+  |> play 44100 2;;
   ```
   
 ## Motivation

@@ -139,7 +139,42 @@ module Filter =
     let dtSq = dt * dt
     let dtCube = dtSq * dt
     c3*dtCube + c2*dtSq + c1*dt + c0
-     
+
+  ///
+  /// <summary>
+  /// Private helper function for calculating delay params
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec">Buffer size in terms of number of seconds</param>
+  /// <param name="delayMs">Delay in milliseconds</param>
+  /// <returns>Tuple of buffer size in number of samples, the delay in number
+  /// of samples, rounded down delay in number of samples to the nearest int and
+  /// fractional delay</returns>
+  ///
+  let private calcDelayParams fs bufferSec delayMs =
+    let bufferSize = int (fs * bufferSec)
+    let delaySamples = delayMs / 1000.0 * fs
+    let delayNumSamples = int delaySamples
+    let fractionalDelay = delaySamples - float delayNumSamples
+    (bufferSize, delaySamples, delayNumSamples, fractionalDelay)
+
+  ///
+  /// <summary>
+  /// Private helper function which calculates the output of the delay line by
+  /// cubic interpolation given fractional delay
+  /// </summary>
+  /// <param name="delayNumSamples">Delay in number of samples</param>
+  /// <param name="fractionalDelay">Fractional delay</param>
+  /// <param name="sample">The input sample</param>
+  /// <param name="buffer">The circular buffer in the delay line</param>
+  /// <returns>The delayed sample</returns>
+  /// 
+  let calcDelayLineOutput delayNumSamples fractionalDelay sample 
+    (buffer : CircularBuffer<float>) =
+    if delayNumSamples = 0 && fractionalDelay = 0.0 then sample 
+    else cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] 
+            fractionalDelay
+
   ///
   /// <summary>Vanilla delay line implemented by circular buffer</summary>
   /// <param name="fs">Sampling frequency in Hz</param>
@@ -154,19 +189,44 @@ module Filter =
   ///
   let delay fs bufferSec delayMs gain feedback wet =
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
-    let bufferSize = int (fs * bufferSec)
-    let delaySamples = delayMs / 1000.0 * fs
-    let delayNumSamples = int delaySamples
-    let fractionalDelay = delaySamples - float delayNumSamples
-    let buffer = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    let (bufferSize, delaySamples, delayNumSamples, fractionalDelay) = 
+      calcDelayParams fs bufferSec delayMs
+    let buf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
     fun sample ->
-      let yn = 
-        if delayNumSamples = 0 && fractionalDelay = 0.0 then sample 
-        else cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] 
-               fractionalDelay
+      let yn = calcDelayLineOutput delayNumSamples fractionalDelay sample buf
       let xn = sample
-      buffer.Push (gain * xn + feedback * yn)
+      buf.Push (gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
+
+  ///
+  /// <summary>
+  /// Creates a ping pong delay line which generates a pair of samples, one for
+  /// the left channel and one for the right, given a pair of input samples for
+  /// the left and right channel
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec">The size of the delay buffer in number of seconds
+  /// </param>
+  /// <param name="delayMs">Delay in milliseconds</param>
+  /// <param name="gain">Gain multiplier on the raw input sample</param>
+  /// <param name="feedback">Feed multiplier</param>
+  /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
+  /// wet and dry samples</param>
+  /// <returns>A function which takes a pair of samples and return a pair of
+  /// samples output by the delay lines</returns>
+  ///
+  let pingpong fs bufferSec delayMs gain feedback wet =
+    if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
+    let (bufferSize, delaySamples, delayNumSamples, fractionalDelay) = 
+      calcDelayParams fs bufferSec delayMs
+    let lBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    let rBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    fun (l, r) ->
+      let leftY = calcDelayLineOutput delayNumSamples fractionalDelay r lBuf
+      let rightY = calcDelayLineOutput delayNumSamples fractionalDelay l rBuf
+      lBuf.Push( gain * r + feedback * rightY )
+      rBuf.Push( gain * l + feedback * leftY )
+      (wet * leftY + (1.0 - wet) * l, wet * rightY + (1.0 - wet) * r)
 
   ///
   /// <summary>Delay line with the number of delayed samples "modulatable" by
@@ -322,3 +382,29 @@ module Filter =
   ///
   let pluckWhiteNoise a (fs:float) f =
     pluckInitBuffer a fs f 1.0 (initWhiteNoise a)
+
+  /// <summary>
+  /// Create a generator by combining a pair of generators, one for the left and
+  /// and the other for the right channel.  Instead of returning one sample
+  /// like the other generators,  it returns a pair of samples with the first
+  /// value for the left channel and the second value for the right channel 
+  /// </summary>
+  /// <param name="gen1">The generator for the left channel</param>
+  /// <param name="gen2">The generator for the right channel</param>
+  /// <param name="t"></param>
+  /// <returns>A function that generates a pair of samples given a time t
+  /// </returns>
+  let multiplex leftGen rightGen =
+    fun t -> (leftGen t, rightGen t)
+
+  /// <summary>
+  /// Given a sequence of pair of samples representing the left and right
+  /// channel, create a list with two sequences of samples in it.  The first
+  /// element in the list represents the sequence of samples for the left
+  /// channel and the second element that of the right channel.  The result
+  /// can then be fed into the various play function and stream function
+  /// </summary>
+  /// <param name="seqPairs">A sequence of pairs</param>
+  /// <returns>A list of two sequences</returns>
+  let demultiplex (seqPairs : seq<'a * 'a>) =
+    [ seqPairs |> Seq.map fst; seqPairs |> Seq.map snd ]
