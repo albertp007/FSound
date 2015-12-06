@@ -159,25 +159,25 @@ module Filter =
     let delaySamples = delayMs / 1000.0 * fs
     let delayNumSamples = int delaySamples
     let fractionalDelay = delaySamples - float delayNumSamples
-    (bufferSize, delaySamples, delayNumSamples, fractionalDelay)
+    (bufferSize, delayNumSamples, fractionalDelay)
   
   ///
   /// <summary>
   /// Private helper function which calculates the output of the delay line by
   /// cubic interpolation given fractional delay
   /// </summary>
-  /// <param name="delayNumSamples">Delay in number of samples</param>
-  /// <param name="fractionalDelay">Fractional delay</param>
+  /// <param name="delaySamples">Delay in number of samples</param>
+  /// <param name="fraction">Fractional delay</param>
   /// <param name="sample">The input sample</param>
   /// <param name="buffer">The circular buffer in the delay line</param>
-  /// <returns>The delayed sample</returns>
+  /// <returns>The interpolated delayed sample</returns>
   /// 
-  let calcDelayLineOutput delayNumSamples fractionalDelay sample 
+  let interpolateDelay delaySamples fraction sample 
       (buffer : CircularBuffer<float>) = 
-    if delayNumSamples = 0 && fractionalDelay = 0.0 then sample
+    if delaySamples = 0 && fraction = 0.0 then sample
     else 
       cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] 
-        fractionalDelay
+        fraction
   
   ///
   /// <summary>Vanilla delay line implemented by circular buffer</summary>
@@ -193,11 +193,11 @@ module Filter =
   ///
   let delay fs bufferSec delayMs gain feedback wet = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
-    let (bufferSize, delaySamples, delayNumSamples, fractionalDelay) = 
+    let (bufferSize, delaySamples, fraction) = 
       calcDelayParams fs bufferSec delayMs
-    let buf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    let buf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
     fun sample -> 
-      let yn = calcDelayLineOutput delayNumSamples fractionalDelay sample buf
+      let yn = interpolateDelay delaySamples fraction sample buf
       let xn = sample
       buf.Push(gain * xn + feedback * yn)
       wet * yn + (1.0 - wet) * sample
@@ -221,36 +221,36 @@ module Filter =
   ///
   let pingpong fs bufferSec delayMs gain feedback wet = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
-    let (bufferSize, delaySamples, delayNumSamples, fractionalDelay) = 
+    let (bufferSize, delaySamples, fraction) = 
       calcDelayParams fs bufferSec delayMs
-    let lBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
-    let rBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    let lBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
+    let rBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
     fun (l, r) -> 
-      let leftY = calcDelayLineOutput delayNumSamples fractionalDelay r lBuf
-      let rightY = calcDelayLineOutput delayNumSamples fractionalDelay l rBuf
+      let leftY = interpolateDelay delaySamples fraction r lBuf
+      let rightY = interpolateDelay delaySamples fraction l rBuf
       lBuf.Push(gain * r + feedback * rightY)
       rBuf.Push(gain * l + feedback * leftY)
       (wet * leftY + (1.0 - wet) * l, wet * rightY + (1.0 - wet) * r)
   
   let lcr fs bufferSec delayMs gain feedback wet lpf hpf = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
-    let (bufferSize, delaySamples, delayNumSamples, fractionalDelay) = 
+    let (bufferSize, delaySamples, fractionalDelay) = 
       calcDelayParams fs bufferSec delayMs
-    let lBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
-    let cBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
-    let rBuf = CircularBuffer(bufferSize, delayNumSamples, (fun _ -> 0.0))
+    let lBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
+    let cBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
+    let rBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
     let hp = hp fs hpf
     let lp = lp fs lpf
     fun (l, r) -> 
       let centerY = 
-        calcDelayLineOutput delayNumSamples fractionalDelay (l + r) cBuf
+        interpolateDelay delaySamples fractionalDelay (l + r) cBuf
       cBuf.Push(gain * (l + r) + (feedback * centerY)
                 |> hp
                 |> lp)
       lBuf.Push(gain * l)
       rBuf.Push(gain * r)
-      let leftY = calcDelayLineOutput delayNumSamples fractionalDelay l lBuf
-      let rightY = calcDelayLineOutput delayNumSamples fractionalDelay r rBuf
+      let leftY = interpolateDelay delaySamples fractionalDelay l lBuf
+      let rightY = interpolateDelay delaySamples fractionalDelay r rBuf
       (l * (1.0 - wet) + leftY * wet + centerY * wet), 
       (r * (1.0 - wet) + rightY * wet + centerY * wet)
   
