@@ -18,6 +18,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+// Define your library scripting code here
+// read the file back in
+// a triangle wave with an adsr
+// saw wave with smith angell resonator at 1024
+// noise with resonator
+// noise with resonator + adsr - the sound of, umm, hitting air?
+// sound of waves using a low pass filter at 200Hz
+// Vanilla delay effect
+/// Chorus effect - the delay params taken from William Sharkey's Interior
+/// Sounds [https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play]
+/// Same as the chorus effect above but with a typo in the sampling frequency
+/// in the delay and it turns out to sound completely different
+// natural tuning
+// natural tuning
+module SignalTest
+
 #I "bin/Debug"
 #r "FSound.dll"
 
@@ -34,7 +50,6 @@ Environment.SetEnvironmentVariable
    Environment.GetEnvironmentVariable("Path") + ";" + __SOURCE_DIRECTORY__ 
    + @"\packages\NAudio.Lame.1.0.3\content")
 
-// Define your library scripting code here
 let testWaveform waveformGen path = [ waveformGen ] |> streamToWav 44100 2 path
 let testSinusoid() = 
   testWaveform (sinusoidGenerator 20000.0 440.0 0.0 44100.0 2.0) 
@@ -91,7 +106,6 @@ let testRead() =
   let w1 = SoundFile(44100.0, 2, true, (Mono gen))
   let fileName = @"temp_square.wav"
   w1.WriteWav fileName
-  // read the file back in
   let w2 = SoundFile.ReadWav fileName
   let (Mono m2) = w2.Samples
   let m1 = Seq.map (fun s -> float (int s)) gen
@@ -119,36 +133,26 @@ let funny() =
     sleep (((int tau) + 1) * 1000)
   
   let play = playDuration 2.0
-  // a triangle wave with an adsr
   modulate (triangle 20000.0 2000.0) adsr1 |> play
-  // saw wave with smith angell resonator at 1024
   saw 20000.0 440.0
   >> smithAngell 44100.0 1024.0 10.0
   |> play
-  // noise with resonator
   whiteNoise 50000.0
   >> smithAngell 44100.0 880.0 10.0
   |> play
-  // noise with resonator + adsr - the sound of, umm, hitting air?
   modulate (whiteNoise 50000.0) adsr1
   >> smithAngell 44100.0 880.0 10.0
   |> play
-  // sound of waves using a low pass filter at 200Hz
   modulate (whiteNoise 50000.0) (lfo 0.05 0.0 0.8)
   >> lp 44100.0 220.0
   |> playDuration 50.0
-  // Vanilla delay effect
   modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 44100.0 2.0 200.0 1.0 0.15 0.4
   |> playDuration 2.0
-  /// Chorus effect - the delay params taken from William Sharkey's Interior
-  /// Sounds [https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play]
   modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
     (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 44100.0 2.0 200.0 1.0 0.9 0.5
   |> playDuration 10.0
-  /// Same as the chorus effect above but with a typo in the sampling frequency
-  /// in the delay and it turns out to sound completely different
   modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
     (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
@@ -255,7 +259,6 @@ let karplusStrong() =
 let cMajor7() = 
   let gen pitch = 
     modulate (triangle 15000.0 pitch) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  // natural tuning
   let (c, e, g, b) = (gen 256.0, gen 320.0, gen 384.0, gen 480.0)
   [ arrange [ (0.0, c)
               (0.0, e)
@@ -263,12 +266,13 @@ let cMajor7() =
               (0.0, b) ] ]
   |> playWave 44100.0 1.0 @"samples\cmajor7.wav"
 
-let pingPong() =
+let pingPong() = 
   let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  multiplex (i 256.0) (i 384.0) >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5 
-  |> generate 44100.0 5.0 
-  |> demultiplex 
-  |> streamToWav 44100 2 @"samples\pingpong.wav";;
+  multiplex (i 256.0) (i 384.0)
+  >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
+  |> generate 44100.0 5.0
+  |> demultiplex
+  |> streamToWav 44100 2 @"samples\pingpong.wav"
 
 let convertWavToMp3 directory = 
   let makeMp3Path wavPath = 
@@ -276,6 +280,21 @@ let convertWavToMp3 directory =
     + System.IO.Path.GetFileNameWithoutExtension(wavPath) + @".mp3"
   System.IO.Directory.GetFiles(directory, @"*.wav") 
   |> Array.iter (fun input -> wavToMp3 input (makeMp3Path input))
+
+let cMajor7FMajor7pingpong() = 
+  let gen pitch = 
+    modulate (triangle 15000.0 pitch) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  let (c, d, e, f, g, a, b) = 
+    (gen 256.0, gen 288.0, gen 320.0, gen 341.33, gen 384.0, gen 440.0, 
+     gen 480.0) 
+  let piece()  = 
+    multiplex (arrange [ (0.0, c); (0.0, b); (4.0, f); (4.0, a) ]) 
+      (arrange [ (0.0, e); (0.0, g); (4.0, c); (4.0, e) ])
+    >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
+    |> generate 44100.0 10.0
+    |> demultiplex
+  piece() |> play 44100 2
+  piece() |> streamToWav 44100 2 @"samples\progression.wav"
 
 let readmeExamples() = 
   generateSawAndStreamToWav()
@@ -299,6 +318,7 @@ let readmeExamples() =
   karplusStrong()
   cMajor7()
   pingPong()
+  cMajor7FMajor7pingpong()
   convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
 
 let test() = 
