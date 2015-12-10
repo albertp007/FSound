@@ -245,9 +245,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Play;;
   let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   multiplex (i 256.0) (i 384.0) >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5 
-  |> generate 44100.0 5.0 
-  |> demultiplex 
-  |> play 44100 2;;
+  |> generate 44100.0 15.0 
+  |> playStereo 44100 2;;
   ```
 
 * Chord progression CMaj7 to FMaj7 with ping pong delay - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/progression.mp3)
@@ -265,9 +264,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   multiplex (arrange [ (0.0, c); (0.0, b); (4.0, f); (4.0, a) ]) 
     (arrange [ (0.0, e); (0.0, g); (4.0, c); (4.0, e) ])
   >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
-  |> generate 44100.0 10.0
-  |> demultiplex
-  |> play 44100 2;;
+  |> generate 44100.0 15.0
+  |> playStereo 44100 2;;
   ```
   
 ## Motivation

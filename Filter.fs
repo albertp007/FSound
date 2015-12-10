@@ -35,13 +35,17 @@ module Filter =
   /// </param>
   /// <param name="fbcoeff">feed back coefficients for the output samples
   /// </param>
+  /// <param name="ffinit">initialization function for the feedforward buffer
+  /// </param>
+  /// <param name="fbinit">initialization function for the feedback buffer
+  /// </param
   /// <returns>A function which takes in a float as a sample and returns y(n)
   /// </returns>
   ///
-  let filter ffcoeff fbcoeff = 
-    let makeMovingWindow n = MovingWindow<float>(Seq.init n (fun _ -> 0.0))
-    let ff_w = makeMovingWindow (Seq.length ffcoeff)
-    let fb_w = makeMovingWindow (Seq.length fbcoeff)
+  let filter_with_init ffcoeff fbcoeff ffinit fbinit = 
+    let makeMovingWindow n init = MovingWindow<float>(Seq.init n init)
+    let ff_w = makeMovingWindow (Seq.length ffcoeff) ffinit
+    let fb_w = makeMovingWindow (Seq.length fbcoeff) fbinit
     let ff_only = Seq.toList fbcoeff |> Seq.forall (fun x -> x = 0.0)
     let rev_ff = DenseVector(List.rev ffcoeff |> Seq.toArray)
     let rev_fb = DenseVector(List.rev fbcoeff |> Seq.toArray)
@@ -54,6 +58,23 @@ module Filter =
         if ff_only then s'
         else s' - rev_fb.DotProduct(DenseVector(fb_w.GetArray()))
       fb_w.Push(w')
+  
+  ///
+  /// <summary>Filter with feedforward and feedback coefficients
+  /// y(n) = ff0 * x(n) + ff1 * x(n-1) + ... + ffm * x(n-m) -
+  ///        (fb0 * y(n-1) + fb1 * y(n-2) + ... + fbm * x(n-m-1))
+  /// It simply defers to filter_with_init with zero init function
+  /// </summary>
+  /// <param name="ffcoeff">feed forward coefficients for the input samples
+  /// </param>
+  /// <param name="fbcoeff">feed back coefficients for the output samples
+  /// </param>
+  /// <returns>A function which takes in a float as a sample and returns y(n)
+  /// </returns>
+  ///
+  let filter ffcoeff fbcoeff = 
+    let zero _ = 0.0
+    filter_with_init ffcoeff fbcoeff zero zero
   
   ///
   /// <summary>Generate impulse response for a filter</summary>
@@ -175,9 +196,7 @@ module Filter =
   let interpolateDelay delaySamples fraction sample 
       (buffer : CircularBuffer<float>) = 
     if delaySamples = 0 && fraction = 0.0 then sample
-    else 
-      cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] 
-        fraction
+    else cubicInterpolate buffer.[-1] buffer.[0] buffer.[1] buffer.[2] fraction
   
   ///
   /// <summary>Vanilla delay line implemented by circular buffer</summary>
@@ -242,8 +261,7 @@ module Filter =
     let hp = hp fs hpf
     let lp = lp fs lpf
     fun (l, r) -> 
-      let centerY = 
-        interpolateDelay delaySamples fractionalDelay (l + r) cBuf
+      let centerY = interpolateDelay delaySamples fractionalDelay (l + r) cBuf
       cBuf.Push(gain * (l + r) + (feedback * centerY)
                 |> hp
                 |> lp)
@@ -444,3 +462,19 @@ module Filter =
   let demultiplex (seqPairs : seq<'a * 'a>) = 
     [ seqPairs |> Seq.map fst
       seqPairs |> Seq.map snd ]
+
+  /// <summary>
+  /// A simple but more efficient implementation of a sinusoid using a filter 
+  /// and initial conditions.  It calls the more computational intensive sin 
+  /// function exactly twice instead of for every sample
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency in Hz</param>
+  let osc fs a f =
+    let theta = 2.0 * System.Math.PI * f / fs
+    let b1 = -2.0 * cos( theta )
+    let b2 = 1.0
+    let init n = sin ( float(-n-1) * theta )
+    let zero _ = 0.0
+    filter_with_init [0.0] [b1; b2] zero init >> (*) a

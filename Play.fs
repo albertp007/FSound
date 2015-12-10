@@ -61,6 +61,9 @@ module Play =
     | [ left; right ] -> 
       playSampleSeq sampleRate bytesPerSample (Stereo(left, right))
     | multi -> playSampleSeq sampleRate bytesPerSample (Multi multi)
+
+  let playStereo sampleRate bytesPerSample sequences =
+    playSampleSeq sampleRate bytesPerSample (Stereo2 sequences)
   
   ///
   /// <summary>Plays a SoundFile using NAudio as a background job</summary>

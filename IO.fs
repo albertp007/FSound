@@ -110,6 +110,7 @@ module IO =
   type SampleSeq = 
     | Mono of seq<float>
     | Stereo of seq<float> * seq<float>
+    | Stereo2 of seq<float*float>
     | Multi of seq<float> list
     
     ///
@@ -139,6 +140,7 @@ module IO =
       match x with
       | Mono sequence -> Seq.iter pack1 sequence
       | Stereo(left, right) -> Seq.iter pack2 (Seq.zip left right)
+      | Stereo2 seq ->  Seq.iter pack2 seq
       | Multi channels -> Seq.iter packN (zipSeq channels)
       !bytesWritten
     
@@ -148,7 +150,7 @@ module IO =
     member x.NumChannels = 
       match x with
       | Mono _ -> 1
-      | Stereo _ -> 2
+      | Stereo _ | Stereo2 _ -> 2
       | Multi s -> Seq.length s
   
   ///
@@ -386,6 +388,9 @@ module IO =
     | [ mono ] -> streamToWavMono samplingRate bytesPerSample path mono
     | [ l; r ] -> streamToWavLR samplingRate bytesPerSample path (l, r)
     | rest -> streamToWavMultiple samplingRate bytesPerSample path rest
+
+  let streamPairsToWav samplingRate bytesPerSample path channels = 
+    streamSeqToWav samplingRate bytesPerSample path (Stereo2 channels)
   
   ///
   /// <summary>Type to represent a sound file</summary>

@@ -267,12 +267,13 @@ let cMajor7() =
   |> playWave 44100.0 1.0 @"samples\cmajor7.wav"
 
 let pingPong() = 
-  let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  multiplex (i 256.0) (i 384.0)
-  >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
-  |> generate 44100.0 5.0
-  |> demultiplex
-  |> streamToWav 44100 2 @"samples\pingpong.wav"
+  let piece() =
+    let i p = modulate (triangle 10000.0 p) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+    multiplex (i 256.0) (i 384.0)
+    >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
+    |> generate 44100.0 15.0
+  piece() |> FSound.Play.playStereo 44100 2
+  piece() |> streamPairsToWav 44100 2 @"samples\pingpong.wav"
 
 let convertWavToMp3 directory = 
   let makeMp3Path wavPath = 
@@ -291,10 +292,9 @@ let cMajor7FMajor7pingpong() =
     multiplex (arrange [ (0.0, c); (0.0, b); (4.0, f); (4.0, a) ]) 
       (arrange [ (0.0, e); (0.0, g); (4.0, c); (4.0, e) ])
     >> pingpong 44100.0 2.0 200.0 1.0 0.9 0.5
-    |> generate 44100.0 10.0
-    |> demultiplex
-  piece() |> play 44100 2
-  piece() |> streamToWav 44100 2 @"samples\progression.wav"
+    |> generate 44100.0 15.0
+  piece() |> FSound.Play.playStereo 44100 2
+  piece() |> streamPairsToWav 44100 2 @"samples\progression.wav"
 
 let readmeExamples() = 
   generateSawAndStreamToWav()
