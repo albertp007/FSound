@@ -235,21 +235,31 @@ module Filter =
   /// <param name="feedback">Feed multiplier</param>
   /// <param name="wet">Number between 0.0 and 1.0 to control the ratio of the
   /// wet and dry samples</param>
+  /// <param name="repeat">Repeatedly push the input signal into the delay line
+  /// the specified number of times.  Then push it in one final time and take
+  /// the result as the return value.  This means that the input signal is run
+  /// through the delay line once even when repeat is set to 0
   /// <returns>A function which takes a pair of samples and return a pair of
   /// samples output by the delay lines</returns>
   ///
-  let pingpong fs bufferSec delayMs gain feedback wet = 
+  let pingpong fs bufferSec delayMs gain feedback wet repeat = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
     let (bufferSize, delaySamples, fraction) = 
       calcDelayParams fs bufferSec delayMs
     let lBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
     let rBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
-    fun (l, r) -> 
+    let calc (l, r) =
+      // printfn "pp: %A" (l, r)
       let leftY = interpolateDelay delaySamples fraction r lBuf
       let rightY = interpolateDelay delaySamples fraction l rBuf
       lBuf.Push(gain * r + feedback * rightY)
       rBuf.Push(gain * l + feedback * leftY)
       (wet * leftY + (1.0 - wet) * l, wet * rightY + (1.0 - wet) * r)
+    fun pair ->
+      for i in [0..(repeat - 1)] do
+        calc pair |> ignore
+        calc pair |> ignore
+      calc pair 
   
   let lcr fs bufferSec delayMs gain feedback wet lpf hpf = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
@@ -450,19 +460,6 @@ module Filter =
   /// </returns>
   let multiplex leftGen rightGen = fun t -> (leftGen t, rightGen t)
   
-  /// <summary>
-  /// Given a sequence of pair of samples representing the left and right
-  /// channel, create a list with two sequences of samples in it.  The first
-  /// element in the list represents the sequence of samples for the left
-  /// channel and the second element that of the right channel.  The result
-  /// can then be fed into the various play function and stream function
-  /// </summary>
-  /// <param name="seqPairs">A sequence of pairs</param>
-  /// <returns>A list of two sequences</returns>
-  let demultiplex (seqPairs : seq<'a * 'a>) = 
-    [ seqPairs |> Seq.map fst
-      seqPairs |> Seq.map snd ]
-
   /// <summary>
   /// A simple but more efficient implementation of a sinusoid using a filter 
   /// and initial conditions.  It calls the more computational intensive sin 
