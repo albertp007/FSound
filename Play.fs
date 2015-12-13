@@ -62,6 +62,24 @@ module Play =
       playSampleSeq sampleRate bytesPerSample (Stereo(left, right))
     | multi -> playSampleSeq sampleRate bytesPerSample (Multi multi)
 
+  /// <summary>
+  /// Convenience function to play a sequence of floats as samples
+  /// </summary>
+  /// <param name="sampleRate">Sampling frequency in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="sequence">Sequence of floats to play</param>
+  /// <returns>unit</returns>
+  let playMono sampleRate bytesPerSample sequence =
+    playSampleSeq sampleRate bytesPerSample (Mono sequence)
+
+  /// <summary>
+  /// Convenience function to play a sequence of pairs of floats as sample
+  /// values for the left and right channel
+  /// </summary>
+  /// <param name="sampleRate">Sampling frequency in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="sequences">Sequence of pairs of floats</param>
+  /// <returns>unit</returns>
   let playStereo sampleRate bytesPerSample sequences =
     playSampleSeq sampleRate bytesPerSample (Stereo2 sequences)
   
