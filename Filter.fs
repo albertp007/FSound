@@ -258,7 +258,6 @@ module Filter =
     fun pair ->
       for i in [0..(repeat - 1)] do
         calc pair |> ignore
-        calc pair |> ignore
       calc pair 
   
   let lcr fs bufferSec delayMs gain feedback wet lpf hpf = 
