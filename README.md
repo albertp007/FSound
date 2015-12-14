@@ -271,8 +271,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#
-programming language and applying to a domain I have always found fascinating -
-Sound.
+programming language and applying it to a domain I have always found fascinating
+ - Sound.
 
 
 ## Installation
