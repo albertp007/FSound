@@ -61,13 +61,29 @@ module Signal =
   /// <returns>the value of the waveform at time t</returns>
   ///
   let whiteNoise a (t : float) = 
-    /// The random number generator needs to be outside of the scope of this
-    /// function in order for calling it in a seq expression to actually
-    /// generate a different number every time.  If the random number generator
-    /// is defined within the scope of this function, then calling it in a
-    /// sequence expression will actually generate a sequence of the same number
-    /// Looks like there is a binding somewhere which I am not able to understand
+    // The random number generator needs to be outside of the scope of this
+    // function in order for calling it in a seq expression to actually
+    // generate a different number every time.  If the random number generator
+    // is defined within the scope of this function, then calling it in a
+    // sequence expression will actually generate a sequence of the same number
+    // Looks like there is a binding somewhere which I am not able to understand
     2.0 * a * (random.NextDouble() - 0.5) + t * 0.0
+
+  ///
+  /// <summary>Returns a function which generates an on-off signal</summary>
+  /// <param name="on">The on value</param>
+  /// <param name="off">The off value </param>
+  /// <param name="onTime">The duration in seconds when the output value is set
+  /// the on value</param>
+  /// <param name="offTime">The duration in seconds when the output value is set
+  /// to the off value</param>
+  /// <returns>A signal function that takes time as a parameter</returns>
+  ///
+  let onoff (on : float) (off : float) (onTime : float) (offTime : float) = 
+    let totalTime = onTime + offTime
+    fun t -> 
+      if t % totalTime > onTime then on
+      else off
   
   ///
   /// <summary>Square waveform function</summary>
@@ -77,9 +93,8 @@ module Signal =
   /// <returns>the value of the waveform at time t</returns>
   ///
   let square (a : float) (f : float) (t : float) = 
-    let i = int (2.0 * f * t)
-    if i % 2 = 0 then a
-    else (-a)
+    let square' = onoff a (-a) (0.5 / f) (0.5 / f)
+    square' t
   
   ///
   /// <summary>Saw-tooth waveform function</summary>
@@ -124,6 +139,19 @@ module Signal =
   ///
   let modulate (waveform : float -> float) (modulator : float -> float) 
       (t : float) = (waveform t) * (modulator t)
+
+  ///
+  /// <summary>
+  /// Same as modulate but with order of waveform and modulator reversed for
+  /// easier piping
+  /// </summary>
+  /// <param name="modulator">modulator waveform function</param>
+  /// <param name="waveform">primary waveform function</param>
+  /// <param name="t">time in seconds</param>
+  /// <returns>the value of multipliying the value of the primary waveform at 
+  /// time t and the value of the modulator waveform at time t</returns>
+  ///
+  let modulateBy modulator waveform t = modulate waveform modulator t
   
   ///
   /// <summary>Sums a sequence of waveform functions at time t</summary>
@@ -268,3 +296,13 @@ module Signal =
         if s < 0.0 then 0.0
         else f s
     Seq.fold (fun v (s, gen) -> v + (c gen) (t - s)) 0.0 generatorAtTimeList
+
+  /// <summary>
+  /// Generates a signal function which beeps a given waveform on and off
+  /// </summary>
+  /// <param name="waveform">The input waveform function</param>
+  /// <param name="onTime">The duration of on in seconds</param>
+  /// <param name="offTime">The duration of off in seconds</param>
+  /// <returns>A signal function</returns>
+  let beep waveform onTime offTime =
+    waveform |> modulateBy (onoff 1.0 0.0 onTime offTime)
