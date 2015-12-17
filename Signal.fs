@@ -82,7 +82,7 @@ module Signal =
   let onoff (on : float) (off : float) (onTime : float) (offTime : float) = 
     let totalTime = onTime + offTime
     fun t -> 
-      if t % totalTime > onTime then on
+      if t % totalTime <= onTime then on
       else off
   
   ///
