@@ -58,6 +58,7 @@
     <Compile Include="Filter.fs" />
     <Compile Include="Utilities.fs" />
     <Compile Include="Plot.fs" />
+    <Compile Include="Tests.fs" />
     <Content Include="packages.config" />
     <Content Include="app.config" />
     <None Include="SignalTest.fsx" />
