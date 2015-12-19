@@ -145,6 +145,24 @@ module Filter =
     let b1 = -1.0 / alpha
     filter [ b0; b1 ] [ a1 ]
   
+  /// <summary>
+  /// Band-pass filter using bi-quad configuration
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="fc">Center frequency</param>
+  /// <param name="q">Q factor</param>
+  /// <returns>band-pass filter function</returns>
+  let bp fs fc q =
+    let w = 2.0 * System.Math.PI * fc / fs
+    let alpha = sin(w)/(2.0*q)
+    let b0 = q*alpha
+    let b1 = 0.0
+    let b2 = -b0
+    let a0 = 1.0 + alpha
+    let a1 = -2.0*cos(w)
+    let a2 = 1.0 - alpha
+    filter [b0/a0; b1/a0; b2/a0] [a1/a0; a2/a0]
+
   ///
   /// <summary>Cubic interpolation between t=0 and t=1</summary>
   /// <param name="yMinus1">y(-1)</param>
@@ -474,3 +492,21 @@ module Filter =
     let init n = sin ( float(-n-1) * theta )
     let zero _ = 0.0
     filter_with_init [0.0] [b1; b2] zero init >> (*) a
+
+  /// <summary>
+  /// Split the processing of a sample by passing it to two different functions
+  /// producing a pair
+  /// </summary>
+  /// <param name="f1">Processing function 1</param>
+  /// <param name="f2">Processing function 2</param>
+  /// <param name="s">The sample value</param>
+  /// <returns>A pair</returns>
+  let split f1 f2 (s:float) : (float*float) = (f1 s, f2 s)
+
+  /// <summary>
+  /// Combine the result of a split by adding up the values in the pair
+  /// </summary>
+  /// <param name="s"></param>
+  /// <param name="t"></param>
+  let combine (s:float, t:float) = s + t
+    

@@ -267,12 +267,30 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> generate 44100.0 15.0
   |> playStereo 44100 2;;
   ```
+
+* Ringing tone (based on Andy Farnell's book "Designing Sound") - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/ringing.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Utilities;;
+  let level = 10000.0;;
+  let fs = 44100.0;;
+  let tone() = sum [osc fs level 440.0; osc fs level 480.0];;
+  let telephoneLine() =
+    clipper level 
+    >> bp fs 2000.0 12.0
+    >> split ((*) 0.5 >> bp fs 400.0 3.0) 
+         (clipper (0.4*level) >> (*) 0.15)
+    >> combine
+    >> hp fs 90.0;;
+  [beep (tone() >> telephoneLine()) 2.0 4.0] |> playWave 44100.0 20.0;;
+  ```
   
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#
-programming language and applying it to a domain I have always found fascinating
- - Sound.
+programming language and applying it to a domain I have always found fascinating - Sound
 
 
 ## Installation
