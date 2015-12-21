@@ -116,87 +116,7 @@ module Filter =
     let a0 = 1.0 - sqrt b2
     let a2 = -a0
     filter [ a0; 0.0; a2 ] [ b1; b2 ]
-
-  /// <summary>
-  /// Biquad filter template for lp, hp, bp, notch and allpass filters.  Supply
-  /// an equation to calculate the zeroes (i.e. the feedforward coefficients)
-  /// (The poles are all the same)
-  /// </summary>
-  /// <param name="fs">Sampling frequency in Hz</param>
-  /// <param name="fc">Center frequency in Hz</param>
-  /// <param name="q">Q factor</param>
-  /// <param name="designEq">Function which takes w, the angular frequency and
-  /// alpha and return a triplet of feedforward parameters</param>
-  /// <returns>Vavrious bi-quad filter function according to the design eq
-  /// </returns>
-  let biquad fs fc q designEq =
-    let w = 2.0 * System.Math.PI * fc / fs
-    let cosw = cos w
-    let alpha = sin w / 2.0 /q
-    let (b0, b1, b2) = designEq w alpha
-    let a0 = 1.0 + alpha
-    let a1 = -2.0*cosw
-    let a2 = 1.0 - alpha
-    filter [b0/a0; b1/a0; b2/a0] [a1/a0; a2/a0]
-
-  /// <summary>
-  /// Bi-quad low pass filter
-  /// </summary>
-  /// <param name="fs">Sampling frequcny in Hz</param>
-  /// <param name="fc">Center frequcny in Hz</param>
-  /// <param name="q">Q factor</param>
-  /// <returns>A bi-quad low pass filter function</returns>
-  let bqlp fs fc q =
-    (fun w alpha -> let b1 = 1.0 - cos w
-                    (b1/2.0, b1, b1/2.0))
-    |> biquad fs fc q
-
-  /// <summary>
-  /// Bi-quad high pass filter
-  /// </summary>
-  /// <param name="fs">Sampling frequcny in Hz</param>
-  /// <param name="fc">Center frequcny in Hz</param>
-  /// <param name="q">Q factor</param>
-  /// <returns>A bi-quad high pass filter function</returns>
-  let bqhp fs fc q =
-    (fun w alpha -> let b1 = -(1.0 + cos w)
-                    (-b1/2.0, b1, -b1/2.0))
-    |> biquad fs fc q
-
-  /// <summary>
-  /// Bi-quad band-pass filter
-  /// </summary>
-  /// <param name="fs">Sampling frequency in Hz</param>
-  /// <param name="fc">Center frequency</param>
-  /// <param name="q">Q factor</param>
-  /// <returns>band-pass filter function</returns>
-  let bp fs fc q =
-    (fun w alpha -> let sinw = sin w
-                    (sinw/2.0, 0.0, -sinw/2.0))
-    |> biquad fs fc q
-
-  /// <summary>
-  /// Bi-quad notch filter
-  /// </summary>
-  /// <param name="fs">Sampling frequcny in Hz</param>
-  /// <param name="fc">Center frequcny in Hz</param>
-  /// <param name="q">Q factor</param>
-  /// <returns>A bi-quad notch filter function</returns>
-  let notch fs fc q =
-    (fun w alpha -> let b1 = -2.0 * cos w
-                    (1.0, b1, 1.0))
-    |> biquad fs fc q
-
-  /// <summary>
-  /// Bi-quad all pass filter
-  /// </summary>
-  /// <param name="fs">Sampling frequcny in Hz</param>
-  /// <param name="fc">Center frequcny in Hz</param>
-  /// <param name="q">Q factor</param>
-  /// <returns>A bi-quad all pass filter function</returns>
-  let allpass fs fc q =
-    (fun w alpha -> (1.0 - alpha, -2.0*cos w, 1.0 + alpha)) |> biquad fs fc q
-
+  
   ///
   /// <summary>First order single pole low pass filter</summary>
   /// <param name="fs">sampling frequency</param>
@@ -225,6 +145,24 @@ module Filter =
     let b1 = -1.0 / alpha
     filter [ b0; b1 ] [ a1 ]
   
+  /// <summary>
+  /// Band-pass filter using bi-quad configuration
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="fc">Center frequency</param>
+  /// <param name="q">Q factor</param>
+  /// <returns>band-pass filter function</returns>
+  let bp fs fc q =
+    let w = 2.0 * System.Math.PI * fc / fs
+    let alpha = sin(w)/(2.0*q)
+    let b0 = q*alpha
+    let b1 = 0.0
+    let b2 = -b0
+    let a0 = 1.0 + alpha
+    let a1 = -2.0*cos(w)
+    let a2 = 1.0 - alpha
+    filter [b0/a0; b1/a0; b2/a0] [a1/a0; a2/a0]
+
   ///
   /// <summary>Cubic interpolation between t=0 and t=1</summary>
   /// <param name="yMinus1">y(-1)</param>
@@ -571,3 +509,4 @@ module Filter =
   /// <param name="s"></param>
   /// <param name="t"></param>
   let combine (s:float, t:float) = s + t
+    
