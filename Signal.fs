@@ -213,13 +213,22 @@ module Signal =
   
   ///
   /// <summary>Hard-clips a sample</summary>
-  /// <param name="level">the level the sample is going to be clipped at</param>
+  /// <param name="bottom">the minimum level</param>
+  /// <param name="top">the maximum level</param>
   /// <returns>the value of the sample after clipping
   ///
-  let clipper level (s : float) = 
-    let l' = abs level
-    min (max -l' s) l'
-  
+  let clipper2 bottom top = max bottom >> min top
+
+  ///
+  /// <summary>Hard-clips a sample symmetrically by +/- level</summary>
+  /// <param name="level">the level at which the sample will be clipped both
+  /// up and down</param>
+  /// <returns>the value of the sample after clipping
+  ///
+  let clipper (level:float) =
+    let l = abs level
+    clipper2 -l l
+ 
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>

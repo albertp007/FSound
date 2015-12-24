@@ -571,3 +571,16 @@ module Filter =
   /// <param name="s"></param>
   /// <param name="t"></param>
   let combine (s:float, t:float) = s + t
+
+  /// <summary>
+  /// Alternate between two signals at a specified frequency
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="f">Frequency of alternating between the two signals</param>
+  /// <param name="s1">First signal</param>
+  /// <param name="s2">Second signal</param>
+  let alternate fs f (s1, s2) =
+    let lfo = osc fs 100000.0 f >> clipper2 0.0 1.0 >> bqlp fs 70.0 1.0
+    fun t ->
+      let l = lfo t
+      (1.0 - l)*(s1 t) + l*(s2 t)
