@@ -584,3 +584,24 @@ module Filter =
     fun t ->
       let l = lfo t
       (1.0 - l)*(s1 t) + l*(s2 t)
+
+  let schroeder fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) =
+    let b1 = makeCircularBuffer fs bufferSec dA (fun _ -> 0.0)
+    let b2 = makeCircularBuffer fs bufferSec dB (fun _ -> 0.0)
+    let b3 = makeCircularBuffer fs bufferSec dC (fun _ -> 0.0)
+    let b4 = makeCircularBuffer fs bufferSec dD (fun _ -> 0.0)
+    fun (l, r) ->
+      let (oL, oR) = l + b1.Get(), r + b2.Get()
+      let sum12 = oL + oR 
+      let diff12 = oL - oR
+      let sum34 = b3.Get() + b4.Get()
+      let diff34 = b3.Get() - b4.Get()
+      b1.Push((sum12 + sum34) * gA)
+      b2.Push((diff12 + diff34) * gB)
+      b3.Push((sum12 - sum34) * gC)
+      b4.Push((diff12 - diff34) * gD)
+      (oL, oR)
+    
+
+
+    

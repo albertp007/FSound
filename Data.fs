@@ -119,6 +119,18 @@ module Data =
     ///
     member t.SetLag n = posR <- calcPos -(abs n) posW
   
+  /// <summary>
+  /// Convenience function to calculate buffer size based on sampling frequency
+  /// and duration and create a CircularBuffer of that size
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="duration">In number of seconds</param>
+  /// <param name="lag"></param>
+  /// <param name="init">init function</param>
+  /// <returns>A circular buffer object</returns>
+  let makeCircularBuffer (fs:float) (duration:float) (delayMs:float) init =
+    new CircularBuffer<float>(int (fs*duration), int (fs*delayMs/1000.0), init )
+
   /// <summary>Simple implementation of a moving window using .Net Queue<'T>
   /// </summary>
   type MovingWindow<'T>(init : seq<'T>) = 

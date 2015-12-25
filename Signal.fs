@@ -117,6 +117,16 @@ module Signal =
   let ramp a f t =
     (a + saw a f t) * 0.5
 
+  /// <summary>
+  /// A rampdown function from amplitude to 0
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  /// <param name="t">time in seconds</param>
+  /// <returns>the value of the waveform at time t</returns>
+  let rampdown a f t =
+    a - ramp a f t
+
   ///
   /// <summary>Triangular waveform function</summary>
   /// <param name="a">amplitude</param>
