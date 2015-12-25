@@ -97,17 +97,26 @@ module Signal =
     square' t
   
   ///
-  /// <summary>Saw-tooth waveform function</summary>
+  /// <summary>Saw-tooth waveform function from -a to a</summary>
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency</param>
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
   ///
   let saw (a : float) (f : float) (t : float) = 
-    let cycle = int (f * t)
-    let tau = t - float (cycle) / f
+    let tau = t % (1.0/f)
     -a + 2.0 * a * f * tau
-  
+
+  /// <summary>
+  /// A ramp which is basically just a sawtooth from 0 to a
+  /// </summary>
+  /// <param name="a">amplitude</param>
+  /// <param name="f">frequency</param>
+  /// <param name="t">time in seconds</param>
+  /// <returns>the value of the waveform at time t</returns>
+  let ramp a f t =
+    (a + saw a f t) * 0.5
+
   ///
   /// <summary>Triangular waveform function</summary>
   /// <param name="a">amplitude</param>
