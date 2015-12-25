@@ -286,6 +286,20 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
     >> hp fs 90.0;;
   [beep (tone() >> telephoneLine()) 2.0 4.0] |> playWave 44100.0 20.0;;
   ```
+
+* Schroeder reverb - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/schroeder.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Filter;;
+  open FSound.Play;;
+  let signal = triangle 10000.0 440.0;;
+  let envelope = adsr 0.05 1.0 0.05 0.3 0.1 0.05;;
+  let inst = signal |> modulateBy envelope;;
+  let reverb = schroeder 44100.0 1.0 (101.0, 143.0, 165.0, 177.0)
+                 (0.4, 0.37, 0.3333, 0.3);;
+  multiplex inst inst >> reverb |> generate 44100.0 2.0 |> playStereo 44100 2;;
+  ```
   
 ## Motivation
 

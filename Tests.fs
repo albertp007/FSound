@@ -285,21 +285,39 @@ module Tests =
       |> generate 44100.0 15.0
     piece() |> FSound.Play.playStereo 44100 2
     piece() |> streamPairsToWav 44100 2 @"samples\progression.wav"
-
-  let ringingTone() =
+  
+  let ringingTone() = 
     // This is based on Andy's Farnell book "Designing Audio" Ch. 25 Phone Tones
     let level = 10000.0
     let fs = 44100.0
-    let tone() = sum [osc fs level 440.0; osc fs level 480.0]
-    let telephoneLine() =
-      clipper level 
+    
+    let tone() = 
+      sum [ osc fs level 440.0
+            osc fs level 480.0 ]
+    
+    let telephoneLine() = 
+      clipper level
       >> bp fs 2000.0 12.0
-      >> split ((*) 0.5 >> bp fs 400.0 3.0) 
-           (clipper (0.4*level) >> (*) 0.15)
+      >> split ((*) 0.5 >> bp fs 400.0 3.0) (clipper (0.4 * level) >> (*) 0.15)
       >> combine
       >> hp fs 90.0
-    [beep (tone() >> telephoneLine()) 2.0 4.0]
+    
+    [ beep (tone() >> telephoneLine()) 2.0 4.0 ] 
     |> playWave fs 20.0 @"samples\ringing.wav"
+  
+  let schroederReverb() = 
+    let i = modulate (triangle 10000.0 440.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+    let reverb() = 
+      schroeder 44100.0 1.0 (101.0, 143.0, 165.0, 177.0) 
+        (0.4, 0.37, 0.3333, 0.3)
+    
+    let output() = 
+      multiplex i i
+      >> reverb()
+      |> generate 44100.0 2.0
+   
+    output() |> FSound.Play.playStereo 44100 2
+    output() |> streamPairsToWav 44100 2 @"samples\schroeder.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -325,6 +343,7 @@ module Tests =
     pingPong()
     cMajor7FMajor7pingpong()
     ringingTone()
+    schroederReverb()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 

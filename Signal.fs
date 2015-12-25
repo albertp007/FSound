@@ -21,9 +21,6 @@
 namespace FSound
 
 module Signal = 
-  open MathNet.Numerics.LinearAlgebra.Double
-  open FSound.Data
-  open FSound.IO
   
   let private random = System.Random()
   
