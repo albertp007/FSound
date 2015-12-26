@@ -338,18 +338,10 @@ For help type #help;;
 [Loading C:\Users\panga\project\fsharp\FSound\SignalTest.fsx]
 
 namespace FSI_0002
-  val testWaveform : waveformGen:seq<float> -> path:string -> unit
-  val testSinusoid : unit -> unit
-  val testSquare : unit -> unit
-  val testSaw : unit -> unit
-  val testTriangle : unit -> unit
-  val testNoise : unit -> unit
-  val testWave : unit -> unit
-  val testRead : unit -> bool
-  val test : unit -> unit
+  val main : unit -> bool
 
-> SignalTest.test();;
-val it : unit = ()
+> SignalTest.main();;
+val it : bool = true
 
 > exit 0;;
 
