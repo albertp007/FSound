@@ -116,7 +116,7 @@ module Filter =
     let a0 = 1.0 - sqrt b2
     let a2 = -a0
     filter [ a0; 0.0; a2 ] [ b1; b2 ]
-
+  
   /// <summary>
   /// Biquad filter template for lp, hp, bp, notch and allpass filters.  Supply
   /// an equation to calculate the zeroes (i.e. the feedforward coefficients)
@@ -129,16 +129,19 @@ module Filter =
   /// alpha and return a triplet of feedforward parameters</param>
   /// <returns>Vavrious bi-quad filter function according to the design eq
   /// </returns>
-  let biquad fs fc q designEq =
+  let biquad fs fc q designEq = 
     let w = 2.0 * System.Math.PI * fc / fs
     let cosw = cos w
-    let alpha = sin w / 2.0 /q
+    let alpha = sin w / 2.0 / q
     let (b0, b1, b2) = designEq w alpha
     let a0 = 1.0 + alpha
-    let a1 = -2.0*cosw
+    let a1 = -2.0 * cosw
     let a2 = 1.0 - alpha
-    filter [b0/a0; b1/a0; b2/a0] [a1/a0; a2/a0]
-
+    filter [ b0 / a0
+             b1 / a0
+             b2 / a0 ] [ a1 / a0
+                         a2 / a0 ]
+  
   /// <summary>
   /// Bi-quad low pass filter
   /// </summary>
@@ -146,11 +149,12 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad low pass filter function</returns>
-  let bqlp fs fc q =
-    (fun w alpha -> let b1 = 1.0 - cos w
-                    (b1/2.0, b1, b1/2.0))
+  let bqlp fs fc q = 
+    (fun w alpha -> 
+    let b1 = 1.0 - cos w
+    (b1 / 2.0, b1, b1 / 2.0))
     |> biquad fs fc q
-
+  
   /// <summary>
   /// Bi-quad high pass filter
   /// </summary>
@@ -158,11 +162,12 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad high pass filter function</returns>
-  let bqhp fs fc q =
-    (fun w alpha -> let b1 = -(1.0 + cos w)
-                    (-b1/2.0, b1, -b1/2.0))
+  let bqhp fs fc q = 
+    (fun w alpha -> 
+    let b1 = -(1.0 + cos w)
+    (-b1 / 2.0, b1, -b1 / 2.0))
     |> biquad fs fc q
-
+  
   /// <summary>
   /// Bi-quad band-pass filter
   /// </summary>
@@ -170,11 +175,12 @@ module Filter =
   /// <param name="fc">Center frequency</param>
   /// <param name="q">Q factor</param>
   /// <returns>band-pass filter function</returns>
-  let bp fs fc q =
-    (fun w alpha -> let sinw = sin w
-                    (sinw/2.0, 0.0, -sinw/2.0))
+  let bp fs fc q = 
+    (fun w alpha -> 
+    let sinw = sin w
+    (sinw / 2.0, 0.0, -sinw / 2.0))
     |> biquad fs fc q
-
+  
   /// <summary>
   /// Bi-quad notch filter
   /// </summary>
@@ -182,11 +188,12 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad notch filter function</returns>
-  let notch fs fc q =
-    (fun w alpha -> let b1 = -2.0 * cos w
-                    (1.0, b1, 1.0))
+  let notch fs fc q = 
+    (fun w alpha -> 
+    let b1 = -2.0 * cos w
+    (1.0, b1, 1.0))
     |> biquad fs fc q
-
+  
   /// <summary>
   /// Bi-quad all pass filter
   /// </summary>
@@ -194,9 +201,9 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad all pass filter function</returns>
-  let allpass fs fc q =
-    (fun w alpha -> (1.0 - alpha, -2.0*cos w, 1.0 + alpha)) |> biquad fs fc q
-
+  let allpass fs fc q = 
+    (fun w alpha -> (1.0 - alpha, -2.0 * cos w, 1.0 + alpha)) |> biquad fs fc q
+  
   ///
   /// <summary>First order single pole low pass filter</summary>
   /// <param name="fs">sampling frequency</param>
@@ -328,17 +335,18 @@ module Filter =
       calcDelayParams fs bufferSec delayMs
     let lBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
     let rBuf = CircularBuffer(bufferSize, delaySamples, (fun _ -> 0.0))
-    let calc (l, r) =
+    
+    let calc (l, r) = 
       // printfn "pp: %A" (l, r)
       let leftY = interpolateDelay delaySamples fraction r lBuf
       let rightY = interpolateDelay delaySamples fraction l rBuf
       lBuf.Push(gain * r + feedback * rightY)
       rBuf.Push(gain * l + feedback * leftY)
       (wet * leftY + (1.0 - wet) * l, wet * rightY + (1.0 - wet) * r)
-    fun pair ->
-      for i in [0..(repeat - 1)] do
+    fun pair -> 
+      for i in [ 0..(repeat - 1) ] do
         calc pair |> ignore
-      calc pair 
+      calc pair
   
   let lcr fs bufferSec delayMs gain feedback wet lpf hpf = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
@@ -547,14 +555,14 @@ module Filter =
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency in Hz</param>
-  let osc fs a f =
+  let osc fs a f = 
     let theta = 2.0 * System.Math.PI * f / fs
-    let b1 = -2.0 * cos( theta )
+    let b1 = -2.0 * cos (theta)
     let b2 = 1.0
-    let init n = sin ( float(-n-1) * theta )
+    let init n = sin (float (-n - 1) * theta)
     let zero _ = 0.0
-    filter_with_init [0.0] [b1; b2] zero init >> (*) a
-
+    filter_with_init [ 0.0 ] [ b1; b2 ] zero init >> (*) a
+  
   /// <summary>
   /// Split the processing of a sample by passing it to two different functions
   /// producing a pair
@@ -563,15 +571,15 @@ module Filter =
   /// <param name="f2">Processing function 2</param>
   /// <param name="s">The sample value</param>
   /// <returns>A pair</returns>
-  let split f1 f2 (s:float) : (float*float) = (f1 s, f2 s)
-
+  let split f1 f2 (s : float) : float * float = (f1 s, f2 s)
+  
   /// <summary>
   /// Combine the result of a split by adding up the values in the pair
   /// </summary>
   /// <param name="s"></param>
   /// <param name="t"></param>
-  let combine (s:float, t:float) = s + t
-
+  let combine (s : float, t : float) = s + t
+  
   /// <summary>
   /// Alternate between two signals at a specified frequency
   /// </summary>
@@ -579,20 +587,43 @@ module Filter =
   /// <param name="f">Frequency of alternating between the two signals</param>
   /// <param name="s1">First signal</param>
   /// <param name="s2">Second signal</param>
-  let alternate fs f (s1, s2) =
-    let lfo = osc fs 100000.0 f >> clipper2 0.0 1.0 >> bqlp fs 70.0 1.0
-    fun t ->
+  let alternate fs f (s1, s2) = 
+    let lfo = 
+      osc fs 100000.0 f
+      >> clipper2 0.0 1.0
+      >> bqlp fs 70.0 1.0
+    fun t -> 
       let l = lfo t
-      (1.0 - l)*(s1 t) + l*(s2 t)
-
-  let schroeder fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) =
+      (1.0 - l) * (s1 t) + l * (s2 t)
+  
+  /// <summary>
+  /// Schroeder reverb
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec"></param>
+  /// <param name="dA">Delay in ms of first delay line</param>
+  /// <param name="dB">Delay in ms of second delay line</param>
+  /// <param name="dC">Delay in ms of third delay line</param>
+  /// <param name="dD">Delay in ms of fourth delay line</param>
+  /// <param name="gA">gain before pushing sum of sums into first delay line
+  /// </param>
+  /// <param name="gB">gain before pushing sum of differences into second delay
+  /// line</param>
+  /// <param name="gC">gain before pushing difference of sums into third delay
+  /// line</param>
+  /// <param name="gD">gain before pushing difference of differences into fourth
+  /// delay line</param>
+  /// <returns>A function which takes a (single channel) sample and returns a
+  /// pair of samples representing the left and right channel of the schroeder
+  /// reverb effect</returns>
+  let schroeder fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) = 
     let b1 = makeCircularBuffer fs bufferSec dA (fun _ -> 0.0)
     let b2 = makeCircularBuffer fs bufferSec dB (fun _ -> 0.0)
     let b3 = makeCircularBuffer fs bufferSec dC (fun _ -> 0.0)
     let b4 = makeCircularBuffer fs bufferSec dD (fun _ -> 0.0)
-    fun (l, r) ->
-      let (oL, oR) = l + b1.Get(), r + b2.Get()
-      let sum12 = oL + oR 
+    fun s -> 
+      let (oL, oR) = s + b1.Get(), s + b2.Get()
+      let sum12 = oL + oR
       let diff12 = oL - oR
       let sum34 = b3.Get() + b4.Get()
       let diff34 = b3.Get() - b4.Get()
@@ -601,7 +632,3 @@ module Filter =
       b3.Push((sum12 - sum34) * gC)
       b4.Push((diff12 - diff34) * gD)
       (oL, oR)
-    
-
-
-    

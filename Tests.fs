@@ -312,8 +312,7 @@ module Tests =
         (0.4, 0.37, 0.3333, 0.3)
     
     let output() = 
-      multiplex i i
-      >> reverb()
+      i >> reverb()
       |> generate 44100.0 2.0
    
     output() |> FSound.Play.playStereo 44100 2
