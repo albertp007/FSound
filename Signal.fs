@@ -353,3 +353,62 @@ module Signal =
   let fadeExp duration =
     let r = -log 0.5 /duration
     fun t -> exp (-r * t)
+
+  /// <summary>
+  /// Function to calculate the gains of the square root panning law
+  /// </summary>
+  /// <param name="position">Position towards the left, between 0.0 and 1.0
+  /// </param>
+  /// <returns>A pair representing the gains of the left and right channel
+  /// </returns>
+  let panSqrGain position =
+    (sqrt position, sqrt (1.0 - position))
+
+  /// <summary>
+  /// Function to calculte the gains of the sin/cos panning law
+  /// </summary>
+  /// <param name="position">Position towards the left, between 0.0 and 1.0
+  /// </param>
+  /// <returns>A pair representing the gains of the left and right channel
+  /// </returns>
+  let panCosineGain position =
+    sin (position*System.Math.PI*0.5), sin ((1.0 - position)*System.Math.PI*0.5)
+
+  /// <summary>
+  /// Function to calculate the scaled sample value using the specified panning
+  /// gain calculation function
+  /// </summary>
+  /// <param name="panFunc">Gain calculation function which takes in a parameter
+  /// value which is the position towards the left and returns a pair
+  /// representing the gains of the left and right channel</param>
+  /// <param name="position">Position towards the left, between 0.0 and 1.0
+  /// </param>
+  /// <returns>A function returning a pair representing the sample value of the
+  /// left and right channel calculated by multiplying the panning gains with
+  /// the given sample value</returns>
+  let pan panFunc position =
+    let (gainL, gainR) = panFunc position
+    fun s ->
+      (s * gainL, s * gainR)
+
+  /// <summary>
+  /// Square root panning
+  /// </summary>
+  /// <param name="position">Position towards the left, between 0.0 and 1.0
+  /// </param>
+  /// <returns>A function returning a pair representing the sample value of the
+  /// left and right channel calculated by multiplying the panning gains with
+  /// the given sample value</returns>
+  let panSqr position = pan panSqrGain position
+
+  /// <summary>
+  /// Sine-cosine panning
+  /// </summary>
+  /// <param name="position">Position towards the left, between 0.0 and 1.0
+  /// </param>
+  /// <returns>A function returning a pair representing the sample value of the
+  /// left and right channel calculated by multiplying the panning gains with
+  /// the given sample value</returns>
+  let panCosine position = pan panCosineGain position
+    
+    
