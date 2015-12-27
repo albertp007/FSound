@@ -331,3 +331,25 @@ module Signal =
   /// <returns>A signal function</returns>
   let beep waveform onTime offTime =
     waveform |> modulateBy (onoff 1.0 0.0 onTime offTime)
+
+  /// <summary>
+  /// Linear fading function
+  /// </summary>
+  /// <param name="duration">Number of seconds for envelope to drop to 0
+  /// </param>
+  /// <returns>A function for fading an input signal to be used with modulate
+  /// </returns>
+  let fadeLinear duration =
+    fun t ->
+      if t > duration then 0.0 else 1.0 - t * (1.0/duration)
+
+  /// <summary>
+  /// Exponential fading function
+  /// </summary>
+  /// <param name="duration">Number of seconds for envelope to drop to half
+  /// </param>
+  /// <returns>A function for fading an input signal to be used with modulate
+  /// </returns>
+  let fadeExp duration =
+    let r = -log 0.5 /duration
+    fun t -> exp (-r * t)
