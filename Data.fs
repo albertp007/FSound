@@ -128,9 +128,10 @@ module Data =
   /// <param name="lag"></param>
   /// <param name="init">init function</param>
   /// <returns>A circular buffer object</returns>
-  let makeCircularBuffer (fs:float) (duration:float) (delayMs:float) init =
-    new CircularBuffer<float>(int (fs*duration), int (fs*delayMs/1000.0), init )
-
+  let makeCircularBuffer (fs : float) (duration : float) init (delayMs : float) = 
+    new CircularBuffer<float>(int (fs * duration), int (fs * delayMs / 1000.0), 
+                              init)
+  
   /// <summary>Simple implementation of a moving window using .Net Queue<'T>
   /// </summary>
   type MovingWindow<'T>(init : seq<'T>) = 
@@ -169,3 +170,34 @@ module Data =
     /// <summary>Checks if the window is fully populated</summary>
     ///
     member t.IsFull() = (t.Count() = size)
+  
+  /// <summary>
+  /// Type representing tuples of order up to 10, together with a map function
+  /// </summary>
+  type Tuple<'a> = 
+    | Pair of 'a * 'a
+    | Triple of 'a * 'a * 'a
+    | Quad of 'a * 'a * 'a * 'a
+    | Quintuple of 'a * 'a * 'a * 'a * 'a
+    | Hexuple of 'a * 'a * 'a * 'a * 'a * 'a
+    | Heptuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a
+    | Octuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
+    | Nonuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
+    | Decuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
+
+    static member map f tuple =
+      match tuple with
+      | Pair(a0, a1) -> Pair(f a0, f a1)
+      | Triple(a0, a1, a2) -> Triple(f a0, f a1, f a2)
+      | Quad(a0, a1, a2, a3) -> Quad(f a0, f a1, f a2, f a3)
+      | Quintuple(a0, a1, a2, a3, a4) -> Quintuple(f a0, f a1, f a2, f a3, f a4)
+      | Hexuple(a0, a1, a2, a3, a4, a5) -> 
+        Hexuple(f a0, f a1, f a2, f a3, f a4, f a5)
+      | Heptuple(a0, a1, a2, a3, a4, a5, a6) -> 
+        Heptuple(f a0, f a1, f a2, f a3, f a4, f a5, f a6)
+      | Octuple(a0, a1, a2, a3, a4, a5, a6, a7) -> 
+        Octuple(f a0, f a1, f a2, f a3, f a4, f a5, f a6, f a7)
+      | Nonuple(a0, a1, a2, a3, a4, a5, a6, a7, a8) -> 
+        Nonuple(f a0, f a1, f a2, f a3, f a4, f a5, f a6, f a7, f a8)
+      | Decuple(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) -> 
+        Decuple(f a0, f a1, f a2, f a3, f a4, f a5, f a6, f a7, f a8, f a9)

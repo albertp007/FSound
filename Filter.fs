@@ -597,7 +597,46 @@ module Filter =
       (1.0 - l) * (s1 t) + l * (s2 t)
   
   /// <summary>
-  /// Schroeder reverb
+  /// Schroeder reverb - stereo input
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="bufferSec"></param>
+  /// <param name="dA">Delay in ms of first delay line</param>
+  /// <param name="dB">Delay in ms of second delay line</param>
+  /// <param name="dC">Delay in ms of third delay line</param>
+  /// <param name="dD">Delay in ms of fourth delay line</param>
+  /// <param name="gA">gain before pushing sum of sums into first delay line
+  /// </param>
+  /// <param name="gB">gain before pushing sum of differences into second delay
+  /// line</param>
+  /// <param name="gC">gain before pushing difference of sums into third delay
+  /// line</param>
+  /// <param name="gD">gain before pushing difference of differences into fourth
+  /// delay line</param>
+  /// <returns>A function which takes a pair of samples and returns a
+  /// pair of samples representing the left and right channel of the schroeder
+  /// reverb effect</returns>
+  let schroeder2 fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) = 
+    let zero = fun _ -> 0.0
+    let quad = 
+      Quad(dA, dB, dC, dD) |> Tuple.map(makeCircularBuffer fs bufferSec zero)
+    match quad with
+    | Quad(b1, b2, b3, b4) -> 
+      fun (l, r) -> 
+        let (oL, oR) = l + b1.Get(), r + b2.Get()
+        let sum12 = oL + oR
+        let diff12 = oL - oR
+        let sum34 = b3.Get() + b4.Get()
+        let diff34 = b3.Get() - b4.Get()
+        b1.Push((sum12 + sum34) * gA)
+        b2.Push((diff12 + diff34) * gB)
+        b3.Push((sum12 - sum34) * gC)
+        b4.Push((diff12 - diff34) * gD)
+        (oL, oR)
+    | _ -> failwith "This cannot happen"
+  
+  /// <summary>
+  /// Schroeder reverb - single channel input
   /// </summary>
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="bufferSec"></param>
@@ -617,18 +656,5 @@ module Filter =
   /// pair of samples representing the left and right channel of the schroeder
   /// reverb effect</returns>
   let schroeder fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) = 
-    let b1 = makeCircularBuffer fs bufferSec dA (fun _ -> 0.0)
-    let b2 = makeCircularBuffer fs bufferSec dB (fun _ -> 0.0)
-    let b3 = makeCircularBuffer fs bufferSec dC (fun _ -> 0.0)
-    let b4 = makeCircularBuffer fs bufferSec dD (fun _ -> 0.0)
-    fun s -> 
-      let (oL, oR) = s + b1.Get(), s + b2.Get()
-      let sum12 = oL + oR
-      let diff12 = oL - oR
-      let sum34 = b3.Get() + b4.Get()
-      let diff34 = b3.Get() - b4.Get()
-      b1.Push((sum12 + sum34) * gA)
-      b2.Push((diff12 + diff34) * gB)
-      b3.Push((sum12 - sum34) * gC)
-      b4.Push((diff12 - diff34) * gD)
-      (oL, oR)
+    let r = schroeder2 fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD)
+    fun s -> r (s, s)
