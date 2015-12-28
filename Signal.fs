@@ -178,6 +178,16 @@ module Signal =
   ///
   let sum waveforms (t : float) = 
     Seq.fold (fun acc wf -> acc + wf t) 0.0 waveforms
+
+  /// <summary>
+  /// Sums a sequence of 'stereo' waveform functions at time t.  Each of the 
+  /// waveform functions is assumed to return a pair of samples
+  /// </summary>
+  /// <param name="waveforms">Sequence of waveform functions</param>
+  /// <param name="t">time in seconds</param>
+  let sum2 waveforms (t:float) =
+    let add (x0, y0) (x1, y1) = (x0 + x1, y0 + y1)
+    Seq.fold (fun acc wf -> wf t |> add acc) (0.0, 0.0) waveforms
   
   ///
   /// <summary>Low frequency oscillator</summary>
