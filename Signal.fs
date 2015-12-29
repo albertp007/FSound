@@ -420,5 +420,19 @@ module Signal =
   /// left and right channel calculated by multiplying the panning gains with
   /// the given sample value</returns>
   let panCosine position = pan panCosineGain position
-    
-    
+
+  /// <summary>
+  /// Cross fade between two signals
+  /// </summary>
+  /// <param name="hold">Initial hold period in seconds before fading kicks in
+  /// </param>
+  /// <param name="fade">Number of seconds after which the first signal is
+  /// completely faded out and the second signal is completely faded in</param>
+  /// <param name="s1">Signal function 1</param>
+  /// <param name="s2">Signal function 2</param>
+  /// <returns>A signal function which is the cross fade from signal one to
+  /// signal 2</returns>
+  let crossfade hold fade s1 s2 =
+    fun t ->
+      let f = if t < hold then 1.0 else fadeLinear fade (t - hold)
+      s1 t * f + s2 t * (1.0 - f)
