@@ -55,7 +55,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Utilities;;
   
-  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  [modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)]
   |> playWave 44100.0 1.0;;
   ```
 
@@ -66,8 +66,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
+  [modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5]
   |> playWave 44100.0 1.0;;
   ```
   
@@ -78,8 +78,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5
+  [modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> delay 44100.0 2.0 200.0 1.0 0.15 0.5]
   |> playWave 44100.0 1.0;;
   ```
 
@@ -90,8 +90,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  whiteNoise 50000.0 
-  >> smithAngell 44100.0 440.0 10.0
+  [whiteNoise 50000.0 >> smithAngell 44100.0 440.0 10.0]
   |> playWave 44100.0 2.0;;
   ```
 
@@ -102,8 +101,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-  >> smithAngell 44100.0 880.0 10.0
+  [modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
+  >> smithAngell 44100.0 880.0 10.0]
   |> playWave 44100.0 2.0;;
   ```
 
@@ -114,8 +113,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  whiteNoise 10000.0 
-  >> hp 44100.0 10000.0
+  [whiteNoise 10000.0 >> hp 44100.0 10000.0]
   |> playWave 44100.0 1.0;;
   ```
   
@@ -126,8 +124,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Filter;;
   open FSound.Utilities;;
   
-  modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8)
-  >> lp 44100.0 220.0
+  [modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8) >> lp 44100.0 220.0]
   |> playWave 44100.0 50.0;;
   ```
   
@@ -150,8 +147,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Filter;;
   open FSound.Utilities;;
-  triangle 10000.0 440.0 
-  >> vibrato 44100.0 7.0 2.0 
+  [triangle 10000.0 440.0 >> vibrato 44100.0 7.0 2.0]
   |> playWave 44100.0 5.0;;
   ```
   
@@ -161,8 +157,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Filter;;
   open FSound.Utilities;;
-  saw 10000.0 440.0
-  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  [saw 10000.0 440.0 >> flanger 44100.0 7.0 0.15 0.5 0.2]
   |> playWave 44100.0 10.0;;
   ```
 
@@ -172,8 +167,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Filter;;
   open FSound.Utilities;;
-  whiteNoise 10000.0
-  >> flanger 44100.0 7.0 0.15 0.5 0.2
+  [whiteNoise 10000.0 >> flanger 44100.0 7.0 0.15 0.5 0.2]
   |> playWave 44100.0 10.0;;
   ```
   
@@ -183,8 +177,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Filter;;
   open FSound.Utilities;;
-  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
-  >> delay 44100.0 2.0 200.0 1.0 0.9 0.5
+  [modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 44100.0 2.0 200.0 1.0 0.9 0.5]
   |> playWave 44100.0 10.0;;
   ```
   
@@ -194,8 +188,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Filter;;
   open FSound.Utilities;;
-  modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
-  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
+  [modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
+  >> delay 4410.0 2.0 200.0 1.0 0.9 0.5]
   |> playWave 44100.0 2.0;;  
   ```
   
@@ -300,7 +294,15 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
                  (0.4, 0.37, 0.3333, 0.3);;
   inst >> reverb |> generate 44100.0 2.0 |> playStereo 44100 2;;
   ```
-  
+
+* Ring modulator - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/ringMod.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Play;;
+  [ triangle 10000.0 320.0 |> ring 440.0 |> generate 44100.0 1.0]
+  |> play 44100 2 
+  ```
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#

@@ -317,6 +317,10 @@ module Tests =
    
     output() |> FSound.Play.playStereo 44100 2
     output() |> streamPairsToWav 44100 2 @"samples\schroeder.wav"
+
+  let ringModulation() =
+    [triangle 10000.0 320.0 |> ring 440.0]
+    |> playWave 44100.0 1.0 @"samples\ringMod.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -343,6 +347,7 @@ module Tests =
     cMajor7FMajor7pingpong()
     ringingTone()
     schroederReverb()
+    ringModulation()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 

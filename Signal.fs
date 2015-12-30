@@ -436,3 +436,15 @@ module Signal =
     fun t ->
       let f = if t < hold then 1.0 else fadeLinear fade (t - hold)
       s1 t * f + s2 t * (1.0 - f)
+
+  /// <summary>
+  /// Ring modulator
+  /// </summary>
+  /// <param name="modulatorFreq">Frequency of modulator in Hz</param>
+  /// <param name="carrier">Carrier waveform</param>
+  /// <returns>A signal function for ring modulating the carrier signal by a
+  /// sinusoid</returns>
+  let ring modulatorFreq carrier =
+    let modulator = sinusoid 1.0 modulatorFreq 0.0
+    fun t ->
+      carrier t * (1.0 + modulator t)
