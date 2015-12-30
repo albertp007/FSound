@@ -214,9 +214,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   // For some interesting combinations with different variations of modulated delay line
   // Note:  When copying to F# interactive, copy and execute line by line, or they will
   // all sound at the same time
-  pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0 |> playWave 44100.0 5.0;;
-  pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0 |> playWave 44100.0 5.0;;
-  pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 |> playWave 44100.0 5.0;;
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0] |> playWave 44100.0 5.0;;
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0] |> playWave 44100.0 5.0;;
+  [pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2] |> playWave 44100.0 5.0;;
   ```
   
 * Arrange a list of generators to be played at particular time offset.  The following plays the C maj7 chord - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/cmajor7.mp3)
