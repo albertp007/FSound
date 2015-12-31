@@ -321,6 +321,10 @@ module Tests =
   let ringModulation() =
     [triangle 10000.0 320.0 |> ring 440.0]
     |> playWave 44100.0 1.0 @"samples\ringMod.wav"
+
+  let fmModulation() =
+    [modSinusoid (Const 10000.0) (Ft (sinusoid 1.0 50.0 0.0)) 256.0 1.0 ]
+    |> playWave 44100.0 1.0 @"samples\fm.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -348,6 +352,7 @@ module Tests =
     ringingTone()
     schroederReverb()
     ringModulation()
+    fmModulation()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 
