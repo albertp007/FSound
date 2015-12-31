@@ -48,8 +48,8 @@ module Signal =
   /// <returns>the value of the waveform at time t</returns>
   ///
   let sinusoid a f ph t = 
-    let pi = System.Math.PI
-    a * cos (2.0 * pi * f * t + ph)
+    let w = 2.0 * System.Math.PI * f
+    a * cos (w * t + ph)
   
   ///
   /// <summary>White noise waveform function</summary>
@@ -448,3 +448,48 @@ module Signal =
     let modulator = sinusoid 1.0 modulatorFreq 0.0
     fun t ->
       carrier t * (1.0 + modulator t)
+
+  /// <summary>
+  /// Mod type represents the input parameter to a signal function
+  /// Const is a constant value.  Ft means a function of t, i.e. other signals
+  /// </summary>
+  type Mod =
+    | Const of float
+    | Ft of (float->float)
+
+    /// <summary>
+    /// Gets the value of the mod param.  If it's a constant, simply return it
+    /// if it's an Ft, pass t to it and return the Ft(t)
+    /// </summary>
+    /// <param name="t">Value of time in seconds</param>
+    /// <returns>The value of mod param at time t</returns>
+    member x.GetValue t = match x with 
+                          | Const v -> v
+                          | Ft f -> f t
+
+  /// <summary>
+  /// Convenience function to get the value of a mod param at time t
+  /// </summary>
+  /// <param name="m">The mod param</param>
+  /// <param name="t">The value of time in seconds</param>
+  /// <returns>The value of mod param at time t</returns>
+  let getModValue (m: Mod) =
+    fun t -> m.GetValue t
+
+  /// <summary>
+  /// A sinusoid signal function which takes in modulatable parameters
+  /// </summary>
+  /// <param name="modA">Modulatable amplitude e.g. an LFO</param>
+  /// <param name="modF">Modulatable frequency e.g. an LFO</param>
+  /// <param name="fc">Center frequency in Hz</param>
+  /// <param name="depth">This is theoretically the ratio between the frequency
+  /// deviation to the frequency of the modulator.  If the modulator is an LFO
+  /// with 10Hz, and the frequency deviation is 30Hz around the center frequency
+  /// then depth is 30/10 = 3</param>
+  let modSinusoid (modA: Mod) (modF: Mod) fc depth =
+    let pi = System.Math.PI
+    let w = 2.0 * pi * fc
+    fun t ->
+      let f = depth * modF.GetValue t
+      let a = modA.GetValue t
+      a * cos (w*t + f)
