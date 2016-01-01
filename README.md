@@ -311,7 +311,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Utilities;;
 
-  [modSinusoid (Const 10000.0) (Ft (sinusoid 1.0 50.0 0.0)) 256.0 1.0 ]
+  [fm (Const 10000.0) 256.0 66.0 1.5 ]
   |> playWave 44100.0 1.0;;
   ```
 

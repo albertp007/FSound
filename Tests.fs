@@ -323,7 +323,7 @@ module Tests =
     |> playWave 44100.0 1.0 @"samples\ringMod.wav"
 
   let fmModulation() =
-    [modSinusoid (Const 10000.0) (Ft (sinusoid 1.0 50.0 0.0)) 256.0 1.0 ]
+    [fm (Const 10000.0) 256.0 66.0 1.5 ]
     |> playWave 44100.0 1.0 @"samples\fm.wav"
   
   let readmeExamples() = 

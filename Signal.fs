@@ -21,7 +21,6 @@
 namespace FSound
 
 module Signal = 
-  
   let private random = System.Random()
   
   ///
@@ -65,7 +64,7 @@ module Signal =
     // sequence expression will actually generate a sequence of the same number
     // Looks like there is a binding somewhere which I am not able to understand
     2.0 * a * (random.NextDouble() - 0.5) + t * 0.0
-
+  
   ///
   /// <summary>Returns a function which generates an on-off signal</summary>
   /// <param name="on">The on value</param>
@@ -101,9 +100,9 @@ module Signal =
   /// <returns>the value of the waveform at time t</returns>
   ///
   let saw (a : float) (f : float) (t : float) = 
-    let tau = t % (1.0/f)
+    let tau = t % (1.0 / f)
     -a + 2.0 * a * f * tau
-
+  
   /// <summary>
   /// A ramp which is basically just a sawtooth from 0 to a
   /// </summary>
@@ -111,9 +110,8 @@ module Signal =
   /// <param name="f">frequency</param>
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
-  let ramp a f t =
-    (a + saw a f t) * 0.5
-
+  let ramp a f t = (a + saw a f t) * 0.5
+  
   /// <summary>
   /// A rampdown function from amplitude to 0
   /// </summary>
@@ -121,9 +119,8 @@ module Signal =
   /// <param name="f">Frequency</param>
   /// <param name="t">time in seconds</param>
   /// <returns>the value of the waveform at time t</returns>
-  let rampdown a f t =
-    a - ramp a f t
-
+  let rampdown a f t = a - ramp a f t
+  
   ///
   /// <summary>Triangular waveform function</summary>
   /// <param name="a">amplitude</param>
@@ -155,7 +152,7 @@ module Signal =
   ///
   let modulate (waveform : float -> float) (modulator : float -> float) 
       (t : float) = (waveform t) * (modulator t)
-
+  
   ///
   /// <summary>
   /// Same as modulate but with order of waveform and modulator reversed for
@@ -178,14 +175,14 @@ module Signal =
   ///
   let sum waveforms (t : float) = 
     Seq.fold (fun acc wf -> acc + wf t) 0.0 waveforms
-
+  
   /// <summary>
   /// Sums a sequence of 'stereo' waveform functions at time t.  Each of the 
   /// waveform functions is assumed to return a pair of samples
   /// </summary>
   /// <param name="waveforms">Sequence of waveform functions</param>
   /// <param name="t">time in seconds</param>
-  let sum2 waveforms (t:float) =
+  let sum2 waveforms (t : float) = 
     let add (x0, y0) (x1, y1) = (x0 + x1, y0 + y1)
     Seq.fold (fun acc wf -> wf t |> add acc) (0.0, 0.0) waveforms
   
@@ -237,6 +234,23 @@ module Signal =
       | _ -> (0.0, 0.0, release_end)
     (t - start_point) * slope + intercept
   
+  /// <summary>
+  /// Exponential attack and decay envelope
+  /// </summary>
+  /// <param name="attackTime">Attack time in seconds</param>
+  /// <param name="attackRate">Attack rate, the larger it is, the steeper
+  /// the curve</param>
+  /// <param name="decayTime">Decay time in seconds</param>
+  /// <param name="decayRate">Decay rate, the larger it is, the steeper
+  /// the curve</param>
+  /// <returns>Exponential attack/decay envelope function</returns>
+  let ad attackTime attackRate decayTime decayRate = 
+    fun t -> 
+      if t < attackTime then (t / attackTime) ** (1.0 / attackRate)
+      else if t < attackTime + decayTime then 
+        1.0 - ((t - attackTime) / decayTime) ** (1.0 / decayRate)
+      else 0.0
+  
   ///
   /// <summary>Hard-clips a sample</summary>
   /// <param name="bottom">the minimum level</param>
@@ -244,17 +258,17 @@ module Signal =
   /// <returns>the value of the sample after clipping
   ///
   let clipper2 bottom top = max bottom >> min top
-
+  
   ///
   /// <summary>Hard-clips a sample symmetrically by +/- level</summary>
   /// <param name="level">the level at which the sample will be clipped both
   /// up and down</param>
   /// <returns>the value of the sample after clipping
   ///
-  let clipper (level:float) =
+  let clipper (level : float) = 
     let l = abs level
     clipper2 -l l
- 
+  
   /// <summary>Convenience function which combines sinusoid waveform with
   /// the generate function</summary>
   /// <param name="a">amplitude</param>
@@ -331,7 +345,7 @@ module Signal =
         if s < 0.0 then 0.0
         else f s
     Seq.fold (fun v (s, gen) -> v + (c gen) (t - s)) 0.0 generatorAtTimeList
-
+  
   /// <summary>
   /// Generates a signal function which beeps a given waveform on and off
   /// </summary>
@@ -339,9 +353,9 @@ module Signal =
   /// <param name="onTime">The duration of on in seconds</param>
   /// <param name="offTime">The duration of off in seconds</param>
   /// <returns>A signal function</returns>
-  let beep waveform onTime offTime =
+  let beep waveform onTime offTime = 
     waveform |> modulateBy (onoff 1.0 0.0 onTime offTime)
-
+  
   /// <summary>
   /// Linear fading function
   /// </summary>
@@ -349,10 +363,11 @@ module Signal =
   /// </param>
   /// <returns>A function for fading an input signal to be used with modulate
   /// </returns>
-  let fadeLinear duration =
-    fun t ->
-      if t > duration then 0.0 else 1.0 - t * (1.0/duration)
-
+  let fadeLinear duration = 
+    fun t -> 
+      if t > duration then 0.0
+      else 1.0 - t * (1.0 / duration)
+  
   /// <summary>
   /// Exponential fading function
   /// </summary>
@@ -360,10 +375,10 @@ module Signal =
   /// </param>
   /// <returns>A function for fading an input signal to be used with modulate
   /// </returns>
-  let fadeExp duration =
-    let r = -log 0.5 /duration
+  let fadeExp duration = 
+    let r = -log 0.5 / duration
     fun t -> exp (-r * t)
-
+  
   /// <summary>
   /// Function to calculate the gains of the square root panning law
   /// </summary>
@@ -371,9 +386,8 @@ module Signal =
   /// </param>
   /// <returns>A pair representing the gains of the left and right channel
   /// </returns>
-  let panSqrGain position =
-    (sqrt position, sqrt (1.0 - position))
-
+  let panSqrGain position = (sqrt position, sqrt (1.0 - position))
+  
   /// <summary>
   /// Function to calculte the gains of the sin/cos panning law
   /// </summary>
@@ -381,9 +395,10 @@ module Signal =
   /// </param>
   /// <returns>A pair representing the gains of the left and right channel
   /// </returns>
-  let panCosineGain position =
-    sin (position*System.Math.PI*0.5), sin ((1.0 - position)*System.Math.PI*0.5)
-
+  let panCosineGain position = 
+    sin (position * System.Math.PI * 0.5), 
+    sin ((1.0 - position) * System.Math.PI * 0.5)
+  
   /// <summary>
   /// Function to calculate the scaled sample value using the specified panning
   /// gain calculation function
@@ -396,11 +411,10 @@ module Signal =
   /// <returns>A function returning a pair representing the sample value of the
   /// left and right channel calculated by multiplying the panning gains with
   /// the given sample value</returns>
-  let pan panFunc position =
+  let pan panFunc position = 
     let (gainL, gainR) = panFunc position
-    fun s ->
-      (s * gainL, s * gainR)
-
+    fun s -> (s * gainL, s * gainR)
+  
   /// <summary>
   /// Square root panning
   /// </summary>
@@ -410,7 +424,7 @@ module Signal =
   /// left and right channel calculated by multiplying the panning gains with
   /// the given sample value</returns>
   let panSqr position = pan panSqrGain position
-
+  
   /// <summary>
   /// Sine-cosine panning
   /// </summary>
@@ -420,7 +434,7 @@ module Signal =
   /// left and right channel calculated by multiplying the panning gains with
   /// the given sample value</returns>
   let panCosine position = pan panCosineGain position
-
+  
   /// <summary>
   /// Cross fade between two signals
   /// </summary>
@@ -432,11 +446,13 @@ module Signal =
   /// <param name="s2">Signal function 2</param>
   /// <returns>A signal function which is the cross fade from signal one to
   /// signal 2</returns>
-  let crossfade hold fade s1 s2 =
-    fun t ->
-      let f = if t < hold then 1.0 else fadeLinear fade (t - hold)
+  let crossfade hold fade s1 s2 = 
+    fun t -> 
+      let f = 
+        if t < hold then 1.0
+        else fadeLinear fade (t - hold)
       s1 t * f + s2 t * (1.0 - f)
-
+  
   /// <summary>
   /// Ring modulator
   /// </summary>
@@ -444,38 +460,36 @@ module Signal =
   /// <param name="carrier">Carrier waveform</param>
   /// <returns>A signal function for ring modulating the carrier signal by a
   /// sinusoid</returns>
-  let ring modulatorFreq carrier =
+  let ring modulatorFreq carrier = 
     let modulator = sinusoid 1.0 modulatorFreq 0.0
-    fun t ->
-      carrier t * (1.0 + modulator t)
-
+    fun t -> carrier t * (1.0 + modulator t)
+  
   /// <summary>
   /// Mod type represents the input parameter to a signal function
   /// Const is a constant value.  Ft means a function of t, i.e. other signals
   /// </summary>
-  type Mod =
+  type Mod = 
     | Const of float
-    | Ft of (float->float)
-
+    | Ft of (float -> float)
     /// <summary>
     /// Gets the value of the mod param.  If it's a constant, simply return it
     /// if it's an Ft, pass t to it and return the Ft(t)
     /// </summary>
     /// <param name="t">Value of time in seconds</param>
     /// <returns>The value of mod param at time t</returns>
-    member x.GetValue t = match x with 
-                          | Const v -> v
-                          | Ft f -> f t
-
+    member x.GetValue t = 
+      match x with
+      | Const v -> v
+      | Ft f -> f t
+  
   /// <summary>
   /// Convenience function to get the value of a mod param at time t
   /// </summary>
   /// <param name="m">The mod param</param>
   /// <param name="t">The value of time in seconds</param>
   /// <returns>The value of mod param at time t</returns>
-  let getModValue (m: Mod) =
-    fun t -> m.GetValue t
-
+  let getModValue (m : Mod) = fun t -> m.GetValue t
+  
   /// <summary>
   /// A sinusoid signal function which takes in modulatable parameters
   /// </summary>
@@ -486,10 +500,26 @@ module Signal =
   /// deviation to the frequency of the modulator.  If the modulator is an LFO
   /// with 10Hz, and the frequency deviation is 30Hz around the center frequency
   /// then depth is 30/10 = 3</param>
-  let modSinusoid (modA: Mod) (modF: Mod) fc depth =
+  /// <returns>A signal function</returns>
+  let modSinusoid (modA : Mod) (modF : Mod) fc = 
     let pi = System.Math.PI
     let w = 2.0 * pi * fc
-    fun t ->
-      let f = depth * modF.GetValue t
+    fun t -> 
+      let f = modF.GetValue t
       let a = modA.GetValue t
-      a * cos (w*t + f)
+      a * cos (w * t + f)
+  
+  /// <summary>
+  /// Frequency modulation using the modulatable sinusoid function by
+  /// passing in an LFO as the frequency modulator
+  /// </summary>
+  /// <param name="modA">Amplitude modulation if desired otherwise simply
+  /// pass in a Const for constant amplitude</param>
+  /// <param name="fc">Carrier frequency</param>
+  /// <param name="fm">Modulator frequency</param>
+  /// <param name="depth">This is theoretically the ratio between the frequency
+  /// deviation to the frequency of the modulator.  If the modulator is an LFO
+  /// with 10Hz, and the frequency deviation is 30Hz around the center frequency
+  /// then depth is 30/10 = 3</param>
+  /// <returns>A signal function</returns>
+  let fm modA fc fm depth = modSinusoid modA (Ft(sinusoid depth fm 0.0)) fc
