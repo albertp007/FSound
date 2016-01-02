@@ -82,7 +82,7 @@ module Signal =
       else off
   
   ///
-  /// <summary>Square waveform function</summary>
+  /// <summary>Square waveform function (Non-band-limited)</summary>
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency</param>
   /// <param name="t">time in seconds</param>
@@ -93,7 +93,7 @@ module Signal =
     square' t
   
   ///
-  /// <summary>Saw-tooth waveform function from -a to a</summary>
+  /// <summary>Saw-tooth waveform function from -a to a (Non-band-limited)</summary>
   /// <param name="a">amplitude</param>
   /// <param name="f">frequency</param>
   /// <param name="t">time in seconds</param>
