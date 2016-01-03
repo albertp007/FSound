@@ -319,7 +319,7 @@ module Tests =
     output() |> streamPairsToWav 44100 2 @"samples\schroeder.wav"
 
   let ringModulation() =
-    [triangle 10000.0 320.0 |> ring 440.0]
+    [triangle 10000.0 320.0 |> ring 1.0 440.0]
     |> playWave 44100.0 1.0 @"samples\ringMod.wav"
 
   let fmModulation() =
