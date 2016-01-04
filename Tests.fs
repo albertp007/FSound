@@ -325,6 +325,20 @@ module Tests =
   let fmModulation() =
     [fm (Const 10000.0) 256.0 66.0 1.5 ]
     |> playWave 44100.0 1.0 @"samples\fm.wav"
+
+  let fmBass() =
+    [fm (Const 20000.0) 128.0 66.0 2.0 
+    |> modulate (adsr 0.05 1.0 0.2 0.1 0.0 0.0)]
+    |> playWave 44100.0 1.0 @"samples\fmBass.wav"
+
+  let blowingEverHarder() =
+    let modSinusoid1 (modA : Mod) f fm depth = 
+      let pi = System.Math.PI
+      fun t -> 
+        let a = modA.GetValue t
+        a * sin (2.0*pi*(f + depth*sin(2.0*pi*fm*t))*t)
+    [modSinusoid1 (Const 1000.0) 256.0 0.5 20.0] 
+    |> playWave 44100.0 14.5 @"samples\blowingEverHarder.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -353,6 +367,8 @@ module Tests =
     schroederReverb()
     ringModulation()
     fmModulation()
+    fmBass()
+    blowingEverHarder()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 
