@@ -338,7 +338,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 14.5;;
   ```
 
-* Simulation of brass with Chowning's FM Synthesis - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/blowingEverHarder.mp3)
+* Simulation of brass with Chowning's FM Synthesis - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/chowningBrass.mp3)
 
   ```
   open FSound.Signal;;
