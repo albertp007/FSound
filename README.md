@@ -6,6 +6,8 @@ FSound is a library for processing sound using F#
 
 Here are some of the things you can do with FSound:
 
+#### Generate mono wav file
+
 * Generate a .wav file containing a single channel of sawtooth wave of amplitude 10000, 440Hz, 
 sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 seconds
   
@@ -18,6 +20,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> streamToWav 44100 2 @"blah.wav";;
   ```
 
+#### Generate stereo wav file
+
 * Generate a .wav file containing a triangular wave in the left channel and white noise on the right channel
 
   ```
@@ -29,6 +33,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> streamToWav 44100 2 @"blah.wav";;
   ```
   
+#### Play a mono signal
+
 * Play a single channel of triangular wave of amplitude 10000, 440Hz, sampling rate 44100Hz, 1 channel and which lasts for 2 seconds - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/triangle.mp3)
   
   ```
@@ -37,7 +43,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   
   triangle 10000.0 440.0 |> playWave 44100.0 2.0;;
   ```
-  
+
+#### Play different signals in left and right channel
+
 * Play a triangular wave in the left channel and white noise in the right channel. ('playWave' above is a convenience function which calls the more general 'play' function which plays an arbitrary of channels, to first generate a signal and then play it in a single channel) - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/stereo.mp3)
 
   ```
@@ -49,6 +57,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> play 44100 2;;
   ```
 
+#### ADSR envelope
+
 * Add an ADSR envelope to the triangular wave above - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/modulateWithAdsr.mp3)
   
   ```
@@ -58,6 +68,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)]
   |> playWave 44100.0 1.0;;
   ```
+
+####  Delay with ADSR envelope on triangular waveform
 
 * Add 200ms delay, 50/50 dry/wet and 0.15 feedback gain to the triangular wave with an ADSR envelope above - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/modulateTriangleAdsrDelay.mp3)
 
@@ -70,7 +82,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   >> delay 44100.0 2.0 200.0 1.0 0.15 0.5]
   |> playWave 44100.0 1.0;;
   ```
-  
+
+#### Delay with ADSR envelope on white noise
+
 * The same as right above, except replace triangular wave with white noise to produce the sound of shuffling something - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/modulateNoiseAdsrDelay.mp3)
 
   ```
@@ -83,6 +97,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 1.0;;
   ```
 
+#### Smith-Angell resonator
+
 * Shaping white noise with a Smith-Angell resonator - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/noiseSmithAngell.mp3)
 
   ```
@@ -93,6 +109,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [whiteNoise 50000.0 >> smithAngell 44100.0 440.0 10.0]
   |> playWave 44100.0 2.0;;
   ```
+
+#### Smith-Angell resonator with an ADSR envelope
 
 * Shaping white noise first with an ADSR envelope then a Smith-Angell resonator - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/noiseSmithAngellAdsr.mp3)
 
@@ -106,6 +124,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 2.0;;
   ```
 
+#### High-pass filter on white noise
+
 * Generate white noise and pass through a high-pass filter - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/noiseHp.mp3)
 
   ```
@@ -117,6 +137,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 1.0;;
   ```
   
+#### Low-pass filter on white noise with an LFO
+
 * Modulate amplitude of white noise with an LFO and pass through a low-pass filter - A crude simulation to the sound of waves - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/noiseLfo.mp3)
 
   ```
@@ -128,6 +150,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 50.0;;
   ```
   
+#### Plotting frequency spectrum
+
 * Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz
 
   ```
@@ -140,7 +164,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> generate 44100.0 1.0
   |> plotFreq 20000;;
   ```
-  
+
+#### Vibrato
+
 * Vibrato on a triangular wave (7.0 ms max delay, 2Hz LFO) - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/triangleVibrato.mp3)
   
   ```
@@ -150,7 +176,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [triangle 10000.0 440.0 >> vibrato 44100.0 7.0 2.0]
   |> playWave 44100.0 5.0;;
   ```
-  
+
+#### Flanging
+
 * Flanging on saw wave (7.0 ms max delay, 0.15 feedback, 0.5 wet/dry, 0.2Hz LFO) - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/sawFlanger.mp3)
 
   ```
@@ -161,6 +189,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 10.0;;
   ```
 
+#### Flanging on white noise
+
 * Flanging on white noise - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/noiseFlanger.mp3)
 
   ```
@@ -170,7 +200,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [whiteNoise 10000.0 >> flanger 44100.0 7.0 0.15 0.5 0.2]
   |> playWave 44100.0 10.0;;
   ```
-  
+
+#### Chorus
+
 * Chorus effect (44100Hz sampling frequency, 30ms max delay, 0.4 wet/dry, 1.5Hz LFO) on a square wave with an adsr envelope and delay (The delay params are taken from William Sharkey's Interior Sounds (https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play) - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/sawChorusAdsrDelay.mp3)
 
   ```
@@ -192,7 +224,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   >> delay 4410.0 2.0 200.0 1.0 0.9 0.5]
   |> playWave 44100.0 2.0;;  
   ```
-  
+
+#### Streaming sample sequences
+
 * Streaming a sequence of samples to a wav file as the sample is being evaluated.
 
   ```
@@ -204,6 +238,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> generate 44100.0 2.0 ]
   |> streamToWav 44100 2 @"C:\Users\panga\project\FSound\blah.wav";;
   ```
+
+#### Karplus-Strong algorithm
 
 * A crude implementation of the plucked string using Karplus-Strong algorithm.  (Attenuation/Decay cannot be controlled at the moment) - Listen [**Pluck**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/karplusStrong.mp3) [**Vibrato**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/karplusStrongVibrato.mp3) [**Chorus**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/karplusStrongChorus.mp3) [**Flange**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/karplusStrongFlanger.mp3)
 
@@ -218,7 +254,9 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0] |> playWave 44100.0 5.0;;
   [pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2] |> playWave 44100.0 5.0;;
   ```
-  
+ 
+#### Arrangement of instruments
+
 * Arrange a list of generators to be played at particular time offset.  The following plays the C maj7 chord - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/cmajor7.mp3)
 
   ```
@@ -231,6 +269,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 1.0;;
   ```
 
+#### Ping-pong delay
+
 * Ping pong delay - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/pingpong.mp3)
 
   ```
@@ -242,6 +282,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> generate 44100.0 15.0 
   |> playStereo 44100 2;;
   ```
+
+#### Chord progression
 
 * Chord progression CMaj7 to FMaj7 with ping pong delay - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/progression.mp3)
 
@@ -262,6 +304,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playStereo 44100 2;;
   ```
 
+#### Telephone ringing tone
+
 * Ringing tone (based on Andy Farnell's book "Designing Sound") - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/ringing.mp3)
 
   ```
@@ -281,6 +325,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [beep (tone() >> telephoneLine()) 2.0 4.0] |> playWave 44100.0 20.0;;
   ```
 
+#### Schroeder reverberation
+
 * Schroeder reverb - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/schroeder.mp3)
 
   ```
@@ -295,6 +341,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   inst >> reverb |> generate 44100.0 2.0 |> playStereo 44100 2;;
   ```
 
+#### Ring modulation
+
 * Ring modulator - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/ringMod.mp3)
 
   ```
@@ -304,6 +352,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [ triangle 10000.0 320.0 |> ring 440.0]
   |> playWave 44100.0 1.0;;
   ```
+
+#### FM Synthesis
 
 * FM synthesis - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/fm.mp3)
 
@@ -337,6 +387,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   [modSinusoid1 (Const 1000.0) 256.0 0.5 20.0] 
   |> playWave 44100.0 14.5;;
   ```
+
+#### Chowning's FM instruments
 
 * Simulation of brass with Chowning's FM Synthesis - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/chowningBrass.mp3)
 
