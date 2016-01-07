@@ -339,6 +339,11 @@ module Tests =
         a * sin (2.0*pi*(f + depth*sin(2.0*pi*fm*t))*t)
     [modSinusoid1 (Const 1000.0) 256.0 0.5 20.0] 
     |> playWave 44100.0 14.5 @"samples\blowingEverHarder.wav"
+
+  let chowningBrass() =
+    let dur = 1.0
+    [brass 20000.0 512.0 dur]
+    |> playWave 44100.0 dur @"samples\chowningBrass.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -369,6 +374,7 @@ module Tests =
     fmModulation()
     fmBass()
     blowingEverHarder()
+    chowningBrass()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 

@@ -338,6 +338,19 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 14.5;;
   ```
 
+* Simulation of brass with Chowning's FM Synthesis - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/blowingEverHarder.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Utilities;;
+  let dur = 1.0;;
+  let mcRatio = 1.0;;
+  let depth = 5.0;;
+  let depthEnvelope = adsrX 0.2 1.0 0.2 0.6 0.5 0.1 dur;;
+  [chowning 20000.0 512.0 mcRatio depth depthEnvelope] 
+  |> playWave 44100.0 dur;;
+  ```
+
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#

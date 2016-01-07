@@ -203,36 +203,43 @@ module Signal =
   
   ///
   /// <summary>ADSR envelope</summary>
-  /// <param name="at_t">Duration of attack (sec)</param>
-  /// <param name="at_level">Attach level</param>
-  /// <param name="decay_t">Duration of decay period (sec)</param>
-  /// <param name="sus_perc">Suspension level as a percentage of attack level
+  /// <param name="attTime">Duration of attack (sec)</param>
+  /// <param name="attLevel">Attach level</param>
+  /// <param name="decayTime">Duration of decay period (sec)</param>
+  /// <param name="susLevel">Suspension level as a percentage of attack level
   /// </param>
-  /// <param name="sus_t">Duration of suspension (sec)</param>
-  /// <param name="release_t">Duration of release (sec)</param>
+  /// <param name="susTime">Duration of suspension (sec)</param>
+  /// <param name="releaseTime">Duration of release (sec)</param>
   /// <param name="t">time in seconds</param>
   /// <returns>Value of the ADSR envelope at time t</returns>
   ///
-  let adsr at_t at_level decay_t sus_perc sus_t release_t t = 
-    let sus_level = at_level * sus_perc
-    let attack_start = 0.0
-    let decay_start = at_t
-    let suspend_start = decay_start + decay_t
-    let release_start = suspend_start + sus_t
-    let release_end = release_start + release_t
-    
-    let (intercept, slope, start_point) = 
-      match t with
-      | t when t >= attack_start && t < decay_start -> 
-        (0.0, at_level / at_t, attack_start)
-      | t when t >= decay_start && t < suspend_start -> 
-        (at_level, (sus_perc - 1.0) * at_level / decay_t, decay_start)
-      | t when t >= suspend_start && t < release_start -> 
-        (sus_level, 0.0, suspend_start)
-      | t when t >= release_start && t < release_end -> 
-        (sus_level, -sus_level / release_t, release_start)
-      | _ -> (0.0, 0.0, release_end)
-    (t - start_point) * slope + intercept
+  let adsr attTime attLevel decayTime susLevel susTime releaseTime = 
+    let attStart = 0.0
+    let decayStart = attTime
+    let susStart = decayStart + decayTime
+    let releaseStart = susStart + susTime
+    let releaseEnd = releaseStart + releaseTime
+    fun t ->
+      let (intercept, slope, start_point) = 
+        match t with
+        | t when t >= attStart && t < decayStart -> 
+          (0.0, attLevel / attTime, attStart)
+        | t when t >= decayStart && t < susStart -> 
+          (attLevel, (susLevel - 1.0) * attLevel / decayTime, decayStart)
+        | t when t >= susStart && t < releaseStart -> 
+          (susLevel, 0.0, susStart)
+        | t when t >= releaseStart && t < releaseEnd -> 
+          (susLevel, -susLevel / releaseTime, releaseStart)
+        | _ -> (0.0, 0.0, releaseEnd)
+      (t - start_point) * slope + intercept
+
+  let adsrX attTime attLevel decayTime susLevel susTime releaseTime dur =
+    let totalTime = attTime + decayTime + susTime + releaseTime
+    let (attTime', decayTime', susTime', releaseTime') =
+      ( dur * attTime/totalTime, dur * decayTime/totalTime, 
+        dur * susTime/totalTime, dur * releaseTime/totalTime)
+    adsr attTime' attLevel decayTime' susLevel susTime' releaseTime'
+      
   
   /// <summary>
   /// Exponential attack and decay envelope
@@ -488,7 +495,7 @@ module Signal =
   /// <param name="m">The mod param</param>
   /// <param name="t">The value of time in seconds</param>
   /// <returns>The value of mod param at time t</returns>
-  let getModValue (m : Mod) = fun t -> m.GetValue t
+  let getModValue (m : Mod) = m.GetValue
   
   /// <summary>
   /// A sinusoid signal function which takes in modulatable parameters
@@ -523,3 +530,52 @@ module Signal =
   /// then depth is 30/10 = 3</param>
   /// <returns>A signal function</returns>
   let fm modA fc fm depth = modSinusoid modA (Ft(sinusoid depth fm 0.0)) fc
+
+  /// <summary>
+  /// Father of FM Synthesis - John Chowning
+  /// FM synthesis with an envelope on the depth to make spectrum vary with time
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency of carrier</param>
+  /// <param name="mcRatio">Ratio of modulator frequency to the carrier</param>
+  /// <param name="depth">Modulation depth</param>
+  /// <param name="envelope">Envelope to be applied to the depth</param>
+  let chowning a fc mcRatio depth depthEnv = 
+    let fm = fc * mcRatio
+    modSinusoid (Const a) (Ft(sinusoid depth fm 0.0 |> modulateBy depthEnv)) fc
+
+  /// <summary>
+  /// Chowning brass
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  /// <param name="duration">Duration in seconds</param>
+  let brass a f duration =  
+    chowning a f 1.0 5.0 (adsrX 0.2 1.0 0.2 0.6 0.5 0.1 duration)
+
+  /// <summary>
+  /// Chowning oboe
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  /// <param name="duration">Duration in seconds</param>
+  let oboe a f duration =
+    chowning a f (1.0/3.0) 2.0 (adsrX 0.06 0.5 0.04 1.0 0.8 0.1 duration)
+
+  /// <summary>
+  /// Chowning bassoon
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  /// <param name="duration">Duration in seconds</param>
+  let bassoon a f duration =
+    chowning a f 0.2 1.5 (adsrX 0.06 0.5 0.04 1.0 0.8 0.1 duration)
+
+  /// <summary>
+  /// Chowning clarinet
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  /// <param name="duration">Duration in seconds</param>
+  let clarinet a f duration =
+    chowning a f (2.0/3.0) 2.0 (adsrX 0.25 1.0 0.0 1.0 0.5 0.25 duration)
