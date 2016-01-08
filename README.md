@@ -403,6 +403,31 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 dur;;
   ```
 
+* Bell - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/chowningBell.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Utilities;;
+  let mcRatio = 1.4;;
+  let depth = 10.0;;
+  let env = fadeExp 1.0;;
+  [chowning 10000.0 300.0 mcRatio depth env |> modulateBy env]
+  |> playWave 44100.0 15.0;;
+  ```
+
+* Gong - lower the frequency a bit  - [**Listen**] (https://cdn.rawgit.com/albertp007/FSound/master/samples/chowningGong.mp3)
+
+  ```
+  open FSound.Signal;;
+  open FSound.Utilities;;
+  let mcRatio = 1.4;;
+  let depth = 10.0;;
+  let env = fadeExp 1.0;;
+  [chowning 10000.0 100.0 mcRatio depth env |> modulateBy env]
+  |> playWave 44100.0 15.0;;
+  ```
+
+
 ## Motivation
 
 This project arises purely out of a personal interest in learning the F#

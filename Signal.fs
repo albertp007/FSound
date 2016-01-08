@@ -579,3 +579,11 @@ module Signal =
   /// <param name="duration">Duration in seconds</param>
   let clarinet a f duration =
     chowning a f (2.0/3.0) 2.0 (adsrX 0.25 1.0 0.0 1.0 0.5 0.25 duration)
+
+  /// <summary>
+  /// Bells and gongs
+  /// </summary>
+  /// <param name="a">Amplitude</param>
+  /// <param name="f">Frequency</param>
+  let bell a f =
+    chowning a f 1.4 10.0 (fadeExp 1.0) |> modulate (fadeExp 1.0)

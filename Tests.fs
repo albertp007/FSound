@@ -344,6 +344,14 @@ module Tests =
     let dur = 1.0
     [brass 20000.0 512.0 dur]
     |> playWave 44100.0 dur @"samples\chowningBrass.wav"
+
+  let chowningBell() =
+    [bell 10000.0 300.0]
+    |> playWave 44100.0 15.0 @"samples\chowningBell.wav"
+
+  let chowningGong() =
+    [bell 10000.0 100.0]
+    |> playWave 44100.0 15.0 @"samples\chowningGong.wav"
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -375,6 +383,8 @@ module Tests =
     fmBass()
     blowingEverHarder()
     chowningBrass()
+    chowningBell()
+    chowningGong()
     convertWavToMp3 (__SOURCE_DIRECTORY__ + @"\samples")
   
   let test() = 
