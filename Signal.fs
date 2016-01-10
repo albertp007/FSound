@@ -141,17 +141,44 @@ module Signal =
       | _ -> (-a, abs_m)
     intercept + tau * slope
   
+  /// <summary>
+  /// Modulate the waveform signal by the modulator with a binary operator 
+  /// </summary>
+  /// <param name="op">Binary operator, with the value of the signal function at
+  /// time t as first input and the value of the modulator at time t as second
+  /// input</param>
+  /// <param name="waveform">The waveform function</param>
+  /// <param name="modulator">The modulator function</param>
+  /// <returns>A function which takes time t as an input and returns a sample
+  /// </returns>
+  let modulateWith op (waveform : 'a -> 'b) (modulator : 'a -> 'b) = 
+    fun t -> op (waveform t) (modulator t)
+  
   ///
   /// <summary>Modulator function which multiplies two signals at time t
   /// </summary>
   /// <param name="waveform">primary waveform function</param>
   /// <param name="modulator">modulator waveform function</param>
-  /// <param name="t">time in seconds</param>
-  /// <returns>the value of multipliying the value of the primary waveform at 
-  /// time t and the value of the modulator waveform at time t</returns>
+  /// <returns>A function which takes time t as an input and returns a sample
+  /// which is the value of the waveform function at time t multiplied by the
+  /// value of the modulator function at time t
+  /// </returns>
   ///
-  let modulate (waveform : float -> float) (modulator : float -> float) 
-      (t : float) = (waveform t) * (modulator t)
+  let modulate (waveform : float -> float) (modulator : float -> float) = 
+    modulateWith (*) waveform modulator
+  
+  /// <summary>
+  /// Modulate the waveform function with a modulatable filter function which
+  /// takes t as the first input and a sample to operate on as the second input
+  /// </summary>
+  /// <param name="waveform">The waveform function</param>
+  /// <param name="modFilter">The time-varying filter function which takes time
+  /// t as the first input and the sample value to be operated on as the second
+  /// </param>
+  /// <returns>A function which takes time t as an input and returns a sample
+  /// </returns>
+  let modFilter (waveform : float -> float) 
+      (modFilter : float -> float -> float) = fun t -> waveform t |> modFilter t
   
   ///
   /// <summary>
@@ -219,27 +246,25 @@ module Signal =
     let susStart = decayStart + decayTime
     let releaseStart = susStart + susTime
     let releaseEnd = releaseStart + releaseTime
-    fun t ->
+    fun t -> 
       let (intercept, slope, start_point) = 
         match t with
         | t when t >= attStart && t < decayStart -> 
           (0.0, attLevel / attTime, attStart)
         | t when t >= decayStart && t < susStart -> 
           (attLevel, (susLevel - 1.0) * attLevel / decayTime, decayStart)
-        | t when t >= susStart && t < releaseStart -> 
-          (susLevel, 0.0, susStart)
+        | t when t >= susStart && t < releaseStart -> (susLevel, 0.0, susStart)
         | t when t >= releaseStart && t < releaseEnd -> 
           (susLevel, -susLevel / releaseTime, releaseStart)
         | _ -> (0.0, 0.0, releaseEnd)
       (t - start_point) * slope + intercept
-
-  let adsrX attTime attLevel decayTime susLevel susTime releaseTime dur =
+  
+  let adsrX attTime attLevel decayTime susLevel susTime releaseTime dur = 
     let totalTime = attTime + decayTime + susTime + releaseTime
-    let (attTime', decayTime', susTime', releaseTime') =
-      ( dur * attTime/totalTime, dur * decayTime/totalTime, 
-        dur * susTime/totalTime, dur * releaseTime/totalTime)
+    let (attTime', decayTime', susTime', releaseTime') = 
+      (dur * attTime / totalTime, dur * decayTime / totalTime, 
+       dur * susTime / totalTime, dur * releaseTime / totalTime)
     adsr attTime' attLevel decayTime' susLevel susTime' releaseTime'
-      
   
   /// <summary>
   /// Exponential attack and decay envelope
@@ -469,7 +494,7 @@ module Signal =
   /// sinusoid</returns>
   let ring modulationIndex modulatorFreq carrier = 
     carrier 
-    |> modulateBy (sinusoid modulationIndex modulatorFreq 0.0 >> ((+) 1.0)) 
+    |> modulateBy (sinusoid modulationIndex modulatorFreq 0.0 >> ((+) 1.0))
   
   /// <summary>
   /// Mod type represents the input parameter to a signal function
@@ -530,7 +555,7 @@ module Signal =
   /// then depth is 30/10 = 3</param>
   /// <returns>A signal function</returns>
   let fm modA fc fm depth = modSinusoid modA (Ft(sinusoid depth fm 0.0)) fc
-
+  
   /// <summary>
   /// Father of FM Synthesis - John Chowning
   /// FM synthesis with an envelope on the depth to make spectrum vary with time
@@ -543,47 +568,46 @@ module Signal =
   let chowning a fc mcRatio depth depthEnv = 
     let fm = fc * mcRatio
     modSinusoid (Const a) (Ft(sinusoid depth fm 0.0 |> modulateBy depthEnv)) fc
-
+  
   /// <summary>
   /// Chowning brass
   /// </summary>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency</param>
   /// <param name="duration">Duration in seconds</param>
-  let brass a f duration =  
+  let brass a f duration = 
     chowning a f 1.0 5.0 (adsrX 0.2 1.0 0.2 0.6 0.5 0.1 duration)
-
+  
   /// <summary>
   /// Chowning oboe
   /// </summary>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency</param>
   /// <param name="duration">Duration in seconds</param>
-  let oboe a f duration =
-    chowning a f (1.0/3.0) 2.0 (adsrX 0.06 0.5 0.04 1.0 0.8 0.1 duration)
-
+  let oboe a f duration = 
+    chowning a f (1.0 / 3.0) 2.0 (adsrX 0.06 0.5 0.04 1.0 0.8 0.1 duration)
+  
   /// <summary>
   /// Chowning bassoon
   /// </summary>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency</param>
   /// <param name="duration">Duration in seconds</param>
-  let bassoon a f duration =
+  let bassoon a f duration = 
     chowning a f 0.2 1.5 (adsrX 0.06 0.5 0.04 1.0 0.8 0.1 duration)
-
+  
   /// <summary>
   /// Chowning clarinet
   /// </summary>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency</param>
   /// <param name="duration">Duration in seconds</param>
-  let clarinet a f duration =
-    chowning a f (2.0/3.0) 2.0 (adsrX 0.25 1.0 0.0 1.0 0.5 0.25 duration)
-
+  let clarinet a f duration = 
+    chowning a f (2.0 / 3.0) 2.0 (adsrX 0.25 1.0 0.0 1.0 0.5 0.25 duration)
+  
   /// <summary>
   /// Bells and gongs
   /// </summary>
   /// <param name="a">Amplitude</param>
   /// <param name="f">Frequency</param>
-  let bell a f =
-    chowning a f 1.4 10.0 (fadeExp 1.0) |> modulate (fadeExp 1.0)
+  let bell a f = chowning a f 1.4 10.0 (fadeExp 1.0) |> modulate (fadeExp 1.0)

@@ -383,7 +383,7 @@ module Filter =
   /// <returns>Function which takes a sample and returns a response with delay
   /// </returns>
   ///
-  let mod_delay fs bufferSec delayMs gain feedback wet lfo = 
+  let modDelay fs bufferSec delayMs gain feedback wet lfo = 
     if wet < 0.0 || wet > 1.0 then failwith "wet must be between 0.0 and 1.0"
     if bufferSec * 1000.0 < delayMs then failwith "buffer size not large enough"
     let bufferSize = int (fs * bufferSec)
@@ -423,7 +423,7 @@ module Filter =
   ///
   let flanger fs maxDelayMs feedback wet sweepFreq = 
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 1.0 feedback wet 
+    modDelay fs bufferSec maxDelayMs 1.0 feedback wet 
       (lfo sweepFreq System.Math.PI 1.0)
   
   ///
@@ -437,7 +437,7 @@ module Filter =
   ///
   let vibrato fs maxDelayMs sweepFreq = 
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 1.0 0.0 1.0 
+    modDelay fs bufferSec maxDelayMs 1.0 0.0 1.0 
       (lfo sweepFreq System.Math.PI 1.0)
   
   ///
@@ -451,7 +451,7 @@ module Filter =
   /// 
   let chorus fs maxDelayMs wet sweepFreq = 
     let bufferSec = maxDelayMs / 1000.0 * 2.0
-    mod_delay fs bufferSec maxDelayMs 1.0 0.0 wet 
+    modDelay fs bufferSec maxDelayMs 1.0 0.0 wet 
       (lfo sweepFreq (System.Math.PI / 2.0) 1.0)
   
   ///
