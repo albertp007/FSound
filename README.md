@@ -4,6 +4,12 @@ FSound is a library for processing sound using F#
 
 ## Code Example
 
+You can run these examples in F# interactive in Visual Studio.  Make sure you 
+build the project first.   Then in Solution Explorer, right click
+on the FSound project and select "Send Project Output to F# Interactive".  This
+will load the FSound project assembly into F# Interactive.  After that, simply
+copy and paste the code over in each of the following code exmaples.
+
 Here are some of the things you can do with FSound:
 
 #### Generate mono wav file
@@ -152,7 +158,8 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   
 #### Plotting frequency spectrum
 
-* Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz
+* Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz.
+  To run the following in F# interactive, you need to send the Newtonsoft.Json reference to F# interactive in addition to the FSound project reference
 
   ```
   open FSound.Signal;;
