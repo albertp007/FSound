@@ -21,10 +21,12 @@
 namespace FSound
 
 module Plot = 
-  open FSharp.Charting
+  open XPlot.GoogleCharts
+  open XPlot.GoogleCharts.WpfExtensions
   open FSound.Utilities
   open FSound.Filter
-  
+
+  let Show (chart: GoogleChart) = chart.Show()  
   //
   // <summary>Run FFT on signal and plot frequency content using FSharp.Charting
   // </summary>
@@ -35,9 +37,10 @@ module Plot =
     samples
     |> fft
     |> magnitudes
-    |> Seq.take toFreq
-    |> Chart.Point
-    |> fun c -> c.ShowChart()
+    |> Seq.take (toFreq + 1)
+    |> Seq.zip {0..toFreq}
+    |> Chart.Line
+    |> Show
   
   ///
   /// <summary>Generate impulse response of a given length and pass through
@@ -48,6 +51,10 @@ module Plot =
   /// <returns>unit</returns>
   ///
   let plotImpulse n filter = 
-    impulseResponse n filter
-    |> Chart.Point
-    |> fun c -> c.ShowChart()
+    let y = impulseResponse n filter
+    y
+    |> Seq.zip {0..(Seq.length(y)-1)}
+    |> Chart.Line
+    |> Show
+
+

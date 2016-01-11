@@ -64,8 +64,12 @@
     <None Include="SignalTest.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Charting">
-      <HintPath>packages\FSharp.Charting.0.90.12\lib\net40\FSharp.Charting.dll</HintPath>
+    <Reference Include="Google.DataTable.Net.Wrapper">
+      <HintPath>packages\Google.DataTable.Net.Wrapper.3.1.2.0\lib\Google.DataTable.Net.Wrapper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="HttpClient">
+      <HintPath>packages\Http.fs.0.8.0.0\lib\net40\HttpClient.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="MathNet.Numerics">
@@ -84,12 +88,25 @@
       <HintPath>packages\NAudio.Lame.1.0.3\lib\net20\NAudio.Lame.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="XPlot.GoogleCharts">
+      <HintPath>packages\XPlot.GoogleCharts.1.3.0\lib\net45\XPlot.GoogleCharts.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="XPlot.GoogleCharts.WPF">
+      <HintPath>packages\XPlot.GoogleCharts.WPF.1.3.0\lib\net45\XPlot.GoogleCharts.WPF.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
