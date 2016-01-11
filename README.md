@@ -8,7 +8,7 @@ You can run these examples in F# interactive in Visual Studio.  Make sure you
 build the project first.   Then in Solution Explorer, right click
 on the FSound project and select "Send Project Output to F# Interactive".  This
 will load the FSound project assembly into F# Interactive.  After that, simply
-copy and paste the code over in each of the following code exmaples.
+copy and paste the code over in each of the following code examples.
 
 Here are some of the things you can do with FSound:
 
