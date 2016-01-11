@@ -443,12 +443,15 @@ install the free Visual Studio 2015 Community Edition.
 The Visual F# Tools are installed automatically when you first 
 create or open an F# project. See: http://fsharp.org/use/windows/
 
-This project requires you to install the NAudio package. 
+This project requires you to install a couple of dependent packages. 
+
 To do this with Nu-Get in VS:
+
 1. Right click References in Solution Explorer 
 2. Click Manage Nu-Get packages
-3. Search for NAudio
-4. Uninstall then Install NAudio
+3. Click Restore when you see "Some NuGet packages are missing from this solution. Click to restore from your online package sources"
+
+You should be all set.  Simply rebuild the project.  Feel free to send an email to albert.pang@me.com if you run into any problems.
 
 
 ## Tests
