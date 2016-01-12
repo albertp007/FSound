@@ -85,9 +85,22 @@ module Data =
       else t.GetOffset(idx)
     
     ///
-    /// <summary>Returns a copy of the buffer as an array</summary>
+    /// <summary>Returns a copy of the raw buffer as an array</summary>
     ///
-    member t.GetBuffer() = buffer
+    member t.GetRawBuffer() = buffer
+    
+    /// <summary>
+    /// Returns a sequence which starts from the element in PosR and ends at
+    /// PosR + lag
+    /// </summary>
+    member t.GetBufferSeq() = 
+      seq { 
+        for i in [ 0..(lag - 1) ] do
+          let cur = calcPos i posR
+          yield buffer.[cur]
+      }
+
+    member t.GetBuffer() = t.GetBufferSeq() |> Seq.toArray
     
     ///
     /// <summary>Returns the current write index.  The item the current index is
@@ -184,8 +197,7 @@ module Data =
     | Octuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
     | Nonuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
     | Decuple of 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a
-
-    static member map f tuple =
+    static member map f tuple = 
       match tuple with
       | Pair(a0, a1) -> Pair(f a0, f a1)
       | Triple(a0, a1, a2) -> Triple(f a0, f a1, f a2)
