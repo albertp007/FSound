@@ -1,6 +1,6 @@
 ﻿//
 // FSound - F# Sound Processing Library
-// Copyright (c) 2015 by Albert Pang <albert.pang@me.com> 
+// Copyright (c) 2016 by Albert Pang <albert.pang@me.com> 
 // All rights reserved.
 //
 // This file is a part of FSound
@@ -18,20 +18,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Define your library scripting code here
-// read the file back in
-// a triangle wave with an adsr
-// saw wave with smith angell resonator at 1024
-// noise with resonator
-// noise with resonator + adsr - the sound of, umm, hitting air?
-// sound of waves using a low pass filter at 200Hz
-// Vanilla delay effect
-/// Chorus effect - the delay params taken from William Sharkey's Interior
-/// Sounds [https://github.com/williamsharkey/William-FSound-Songs#1-interior-sounds---click-to-play]
-/// Same as the chorus effect above but with a typo in the sampling frequency
-/// in the delay and it turns out to sound completely different
-// natural tuning
-// natural tuning
 module SignalTest
 
 #I "bin/Debug"
