@@ -22,6 +22,7 @@ namespace FSound
 
 module IO = 
   open System.IO
+  open System.Collections.Generic
   
   ///
   /// <summary>Zip a list of sequence from http://fssnip.net/kz by Samuel Bosch
@@ -102,6 +103,28 @@ module IO =
     |> pushShift init
     |> float
   
+  /// <summary>
+  /// Enumerator for SampleSeq type
+  /// </summary>
+  type SampleSeqEnumerator<'a> = 
+    | MonoEnum of IEnumerator<'a>
+    | StereoEnum of IEnumerator<'a> * IEnumerator<'a>
+    | Stereo2Enum of IEnumerator<'a * 'a>
+    | MultiEnum of IEnumerator<'a> list
+
+    /// <summary>
+    /// Calls MoveNext() on all the enumerators of sequences in the SampleSeq
+    /// </summary>
+    member e.MoveNext() = 
+      match e with
+      | MonoEnum e -> e.MoveNext()
+      | StereoEnum(l, r) -> l.MoveNext() && r.MoveNext()
+      | Stereo2Enum e -> e.MoveNext()
+      | MultiEnum e -> 
+        e
+        |> List.exists (fun x -> not (x.MoveNext()))
+        |> not
+  
   ///
   /// <summary>Abstract sequence of samples for mono (sequence of floats), 
   /// stereo (a pair of sequences of floats) and multi-channel (a list of
@@ -110,7 +133,7 @@ module IO =
   type SampleSeq = 
     | Mono of seq<float>
     | Stereo of seq<float> * seq<float>
-    | Stereo2 of seq<float*float>
+    | Stereo2 of seq<float * float>
     | Multi of seq<float> list
     
     ///
@@ -140,7 +163,7 @@ module IO =
       match x with
       | Mono sequence -> Seq.iter pack1 sequence
       | Stereo(left, right) -> Seq.iter pack2 (Seq.zip left right)
-      | Stereo2 seq ->  Seq.iter pack2 seq
+      | Stereo2 seq -> Seq.iter pack2 seq
       | Multi channels -> Seq.iter packN (zipSeq channels)
       !bytesWritten
     
@@ -152,6 +175,16 @@ module IO =
       | Mono _ -> 1
       | Stereo _ | Stereo2 _ -> 2
       | Multi s -> Seq.length s
+    
+    /// <summary>
+    /// Create an instance of SampleSeqEnumerator
+    /// </summary>
+    member x.GetEnumerator() = 
+      match x with
+      | Mono s -> MonoEnum(s.GetEnumerator())
+      | Stereo(l, r) -> StereoEnum(l.GetEnumerator(), r.GetEnumerator())
+      | Stereo2 s -> Stereo2Enum(s.GetEnumerator())
+      | Multi s -> MultiEnum(s |> List.map (fun x -> x.GetEnumerator()))
   
   ///
   /// <summary>Converts a list of sequences to a SampleSeq object</summary>
@@ -388,7 +421,7 @@ module IO =
     | [ mono ] -> streamToWavMono samplingRate bytesPerSample path mono
     | [ l; r ] -> streamToWavLR samplingRate bytesPerSample path (l, r)
     | rest -> streamToWavMultiple samplingRate bytesPerSample path rest
-
+  
   let streamPairsToWav samplingRate bytesPerSample path channels = 
     streamSeqToWav samplingRate bytesPerSample path (Stereo2 channels)
   
@@ -413,3 +446,47 @@ module IO =
     member f.WriteWav path = 
       streamSeqToWav (int f.SamplingRate) f.BytesPerSample path f.Samples
     static member ReadWav(path : string) = SoundFile(readWavFile path)
+  
+  /// <summary>
+  /// Wrapping a SampleSeq object with a read-only stream interface
+  /// </summary>
+  /// <param name="samples">The SampleSeq object</param>
+  /// <param name="convert">A function to convert the type stored in the
+  /// sequences to the type to be written to the read buffer</param>
+  /// <returns>A SampleSeqStream object</returns>
+  type SampleSeqStream(samples : SampleSeq, convert) = 
+  
+    let nChannels = samples.NumChannels
+    let es = samples.GetEnumerator()
+  
+    /// <summary>
+    /// Read a chunk of size specified by count from the sample sequence
+    /// and write that to the buffer array provided
+    /// </summary>
+    /// <param name="buffer"></param>
+    /// <param name="offset"></param>
+    /// <param name="count"></param>
+    member p.Read(buffer : float32 [], offset, count) = 
+      let mutable index = offset
+      let mutable n = count / nChannels
+      while n > 0 && es.MoveNext() do
+        let nWritten =
+          match es with
+          | MonoEnum e -> 
+            buffer.[index] <- convert e.Current
+            1
+          | StereoEnum(l, r) -> 
+            buffer.[index] <- convert l.Current
+            buffer.[index + 1] <- convert r.Current
+            2
+          | Stereo2Enum e -> 
+            let (l, r) = e.Current
+            buffer.[index] <- convert l
+            buffer.[index + 1] <- convert r
+            2
+          | MultiEnum e -> 
+            e |> List.iteri (fun i x -> buffer.[index + i] <- convert x.Current)
+            List.length e
+        index <- index + nWritten
+        n <- n - 1
+      index - offset

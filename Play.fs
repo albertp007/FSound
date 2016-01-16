@@ -61,7 +61,7 @@ module Play =
     | [ left; right ] -> 
       playSampleSeq sampleRate bytesPerSample (Stereo(left, right))
     | multi -> playSampleSeq sampleRate bytesPerSample (Multi multi)
-
+  
   /// <summary>
   /// Convenience function to play a sequence of floats as samples
   /// </summary>
@@ -69,9 +69,9 @@ module Play =
   /// <param name="bytesPerSample">Bit depth in number of bytes</param>
   /// <param name="sequence">Sequence of floats to play</param>
   /// <returns>unit</returns>
-  let playMono sampleRate bytesPerSample sequence =
+  let playMono sampleRate bytesPerSample sequence = 
     playSampleSeq sampleRate bytesPerSample (Mono sequence)
-
+  
   /// <summary>
   /// Convenience function to play a sequence of pairs of floats as sample
   /// values for the left and right channel
@@ -80,7 +80,7 @@ module Play =
   /// <param name="bytesPerSample">Bit depth in number of bytes</param>
   /// <param name="sequences">Sequence of pairs of floats</param>
   /// <returns>unit</returns>
-  let playStereo sampleRate bytesPerSample sequences =
+  let playStereo sampleRate bytesPerSample sequences = 
     playSampleSeq sampleRate bytesPerSample (Stereo2 sequences)
   
   ///
@@ -92,37 +92,28 @@ module Play =
     sf.Samples |> playSampleSeq (int sf.SamplingRate) sf.BytesPerSample
   
   ///
-  /// <summary>Plays a float array using ISampleProvider.  This is experimental
-  /// and does not work yet</summary>
+  /// <summary>Plays a float array using ISampleProvider of NAudio.  Note that
+  /// the amplitude of the sequence of floats accepted by NAudio is normalized
+  /// to be between 0.0 and 1.0, meaning that each sample value is required to
+  /// be between -1.0 and 1.0</summary>
   /// <param name="sampleRate">Sampling rate</param>
-  /// <param name="samples">array of floats as samples</param>
+  /// <param name="samples">SampleSeq object</param>
   /// <returns>unit</returns>
   ///
-  let play2 sampleRate (samples : float []) = 
-    let duration = samples.Length / sampleRate
-    let posRead = ref 0
-    
+  let play2 sampleRate (samples: SampleSeq) =
+
+    let stream = SampleSeqStream(samples, float32)
+    let nChannels = samples.NumChannels
+
     let provider = 
       { new ISampleProvider with
-          
-          member p.Read(buffer, offset, count) = 
-            let samples' = samples |> Array.map float32
-            let size = samples.Length
-            
-            let count' = 
-              if !posRead + count <= size then count
-              else size - (!posRead)
-            Array.blit samples' !posRead buffer offset count'
-            posRead := !posRead + count'
-            if count' < count then 0
-            else count'
-          
+          member p.Read(buffer : float32 [], offset, count) =
+            stream.Read(buffer, offset, count)
+             
           member p.WaveFormat = 
-            WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1) }
-    async { 
-      use wo = new WaveOut()
-      wo.Init(SampleProviders.SampleToWaveProvider16(provider))
-      wo.Play()
-      do! Async.Sleep(duration * 1000)
-    }
-    |> Async.Start
+            WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, nChannels) 
+      }
+    
+    let wo = new WaveOut()
+    wo.Init(provider)
+    wo.Play()
