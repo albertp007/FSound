@@ -21,15 +21,82 @@ module Play =
   open NAudio.Wave
   open FSound.IO
   open System.IO
-  
+
+  /// <summary>
+  /// Creates an instance of ISampleProvider based on the samples in the given
+  /// SampleSeq object
+  /// </summary>
+  /// <param name="sampleRate">Sampling rate in Hz</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="samples">SampleSeq object</param>
+  let getSampleSeqProvider sampleRate bytesPerSample (samples: SampleSeq) =
+    let maxAmp = 2.0 ** (float (bytesPerSample * 8 - 1))
+    let convert s = float32 ( s / maxAmp )
+    let stream = SampleSeqStream(samples, convert)
+    let nChannels = samples.NumChannels
+
+    { new ISampleProvider with
+      member p.Read(buffer : float32 [], offset, count) =
+        stream.Read(buffer, offset, count)
+             
+      member p.WaveFormat = 
+        WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, nChannels) 
+    }
+
   ///
-  /// <summary>Play a SampleSeq object using NAudio</summary>
+  /// <summary>
+  /// Plays a SampleSeq using ISampleProvider of NAudio synchronously.
+  /// </summary>
+  /// <param name="sampleRate">Sampling rate</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="samples">SampleSeq object</param>
+  /// <returns>unit</returns>
+  ///
+  let playSync sampleRate bytesPerSample (samples: SampleSeq) =
+
+    let provider = getSampleSeqProvider sampleRate bytesPerSample samples    
+    use wo = new WaveOutEvent()
+    wo.Init(provider)
+    wo.Play()
+    while wo.PlaybackState = PlaybackState.Playing do
+      System.Threading.Thread.Sleep(100);
+
+  ///
+  /// <summary>
+  /// Plays a SampleSeq using ISampleProvider of NAudio asynchronously
+  /// </summary>
+  /// <param name="sampleRate">Sampling rate</param>
+  /// <param name="bytesPerSample">Bit depth in number of bytes</param>
+  /// <param name="samples">SampleSeq object</param>
+  /// <returns>unit</returns>
+  ///  
+  let playAsync sampleRate bytesPerSample (samples: SampleSeq) =
+    let provider = getSampleSeqProvider sampleRate bytesPerSample samples    
+    let wo = new WaveOutEvent()
+    wo.Init(provider)
+    wo.Play()
+
+  ///
+  /// <summary>Play a SampleSeq object using NAudio synchronously</summary>
   /// <param name="sampleRate">Sampling frequency in Hz</param>
   /// <param name="bytesPerSample">Bit depth in number of bytes</param>
   /// <param name="samples">Sample sequence object to be played</param>
   /// <returns>unit</returns>
   ///
-  let playSampleSeq sampleRate bytesPerSample (samples : SampleSeq) = 
+  let playSampleSeq sampleRate bytesPerSample (samples : SampleSeq) =     
+    playSync sampleRate bytesPerSample samples
+
+  /// <summary>
+  /// Obsolete play function which calculates whole of sample sequence then
+  /// write to a memory stream before playing.  Less efficient than the
+  /// latest play2 function which uses the ISampleProvider interface in
+  /// NAudio which allows the function to compute and read the samples by
+  /// small blocks, hence less latency before playback actually starts
+  /// </summary>
+  /// <param name="sampleRate"></param>
+  /// <param name="bytesPerSample"></param>
+  /// <param name="samples"></param>
+  let playSampleSeq0 sampleRate bytesPerSample (samples : SampleSeq) = 
     async { 
       let nChannel = samples.NumChannels
       let format = WaveFormat(sampleRate, bytesPerSample * 8, nChannel)
@@ -90,30 +157,4 @@ module Play =
   ///
   let playSoundFile (sf : SoundFile) = 
     sf.Samples |> playSampleSeq (int sf.SamplingRate) sf.BytesPerSample
-  
-  ///
-  /// <summary>Plays a float array using ISampleProvider of NAudio.  Note that
-  /// the amplitude of the sequence of floats accepted by NAudio is normalized
-  /// to be between 0.0 and 1.0, meaning that each sample value is required to
-  /// be between -1.0 and 1.0</summary>
-  /// <param name="sampleRate">Sampling rate</param>
-  /// <param name="samples">SampleSeq object</param>
-  /// <returns>unit</returns>
-  ///
-  let play2 sampleRate (samples: SampleSeq) =
-
-    let stream = SampleSeqStream(samples, float32)
-    let nChannels = samples.NumChannels
-
-    let provider = 
-      { new ISampleProvider with
-          member p.Read(buffer : float32 [], offset, count) =
-            stream.Read(buffer, offset, count)
-             
-          member p.WaveFormat = 
-            WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, nChannels) 
-      }
-    
-    let wo = new WaveOut()
-    wo.Init(provider)
-    wo.Play()
+ 

@@ -104,45 +104,11 @@ module Tests =
   let playWave sf t filename waveFunc = 
     let sleep (tau : int) = System.Threading.Thread.Sleep tau
     FSound.Utilities.playWave sf t waveFunc
-    sleep (((int t) + 1) * 1000)
+    // sleep (((int t) + 1) * 1000)
     waveFunc
     |> List.map (generate sf t)
     |> streamToWav (int sf) 2 filename
-  
-  let funny() = 
-    let adsr1 = adsr 0.05 1.0 0.05 0.3 0.1 0.05
-    let sleep (tau : int) = System.Threading.Thread.Sleep tau
     
-    let playDuration tau (waveFunc : float -> float) = 
-      FSound.Utilities.playWave 44100.0 tau [ waveFunc ]
-      sleep (((int tau) + 1) * 1000)
-    
-    let play = playDuration 2.0
-    modulate (triangle 20000.0 2000.0) adsr1 |> play
-    saw 20000.0 440.0
-    >> smithAngell 44100.0 1024.0 10.0
-    |> play
-    whiteNoise 50000.0
-    >> smithAngell 44100.0 880.0 10.0
-    |> play
-    modulate (whiteNoise 50000.0) adsr1
-    >> smithAngell 44100.0 880.0 10.0
-    |> play
-    modulate (whiteNoise 50000.0) (lfo 0.05 0.0 0.8)
-    >> lp 44100.0 220.0
-    |> playDuration 50.0
-    modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-    >> delay 44100.0 2.0 200.0 1.0 0.15 0.4
-    |> playDuration 2.0
-    modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
-      (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-    >> delay 44100.0 2.0 200.0 1.0 0.9 0.5
-    |> playDuration 10.0
-    modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
-      (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
-    >> delay 4410.0 2.0 200.0 1.0 0.9 0.5
-    |> playDuration 2.0
-  
   let generateSawAndStreamToWav() = 
     [ saw 10000.0 440.0 ]
     |> List.map (generate 44100.0 2.0)
@@ -165,24 +131,30 @@ module Tests =
   let modulateWithAdsr() = 
     [ modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) ] 
     |> playWave 44100.0 1.0 @"samples\modulateWithAdsr.wav"
+
   let modulateTriangleAdsrDelay() = 
     [ modulate (triangle 20000.0 2000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
       >> delay 44100.0 2.0 200.0 1.0 0.15 0.5 ] 
     |> playWave 44100.0 1.0 @"samples\modulateTriangleAdsrDelay.wav"
+
   let modulateNoiseAdsrDelay() = 
     [ modulate (whiteNoise 20000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
       >> delay 44100.0 2.0 200.0 1.0 0.15 0.5 ] 
     |> playWave 44100.0 1.0 @"samples\modulateNoiseAdsrDelay.wav"
+
   let noiseSmithAngell() = 
     [ whiteNoise 50000.0 >> smithAngell 44100.0 440.0 10.0 ] 
     |> playWave 44100.0 2.0 @"samples\noiseSmithAngell.wav"
+
   let noiseSmithAngellAdsr() = 
     [ modulate (whiteNoise 50000.0) (adsr 0.05 1.0 0.05 0.3 0.1 0.05) 
       >> smithAngell 44100.0 880.0 10.0 ] 
     |> playWave 44100.0 2.0 @"samples\noiseSmithAngellAdsr.wav"
+
   let noiseHp() = 
     [ whiteNoise 10000.0 >> hp 44100.0 10000.0 ] 
     |> playWave 44100.0 1.0 @"samples\noiseHp.wav"
+
   let noiseLfo() = 
     [ modulate (whiteNoise 10000.0) (lfo 0.05 0.0 0.8) >> lp 44100.0 220.0 ] 
     |> playWave 44100.0 50.0 @"samples\noiseLfo.wav"
@@ -196,16 +168,20 @@ module Tests =
   let triangleVibrato() = 
     [ triangle 10000.0 440.0 >> vibrato 44100.0 7.0 2.0 ] 
     |> playWave 44100.0 5.0 @"samples\triangleVibrato.wav"
+
   let sawFlanger() = 
     [ saw 10000.0 440.0 >> flanger 44100.0 7.0 0.15 0.5 0.2 ] 
     |> playWave 44100.0 10.0 @"samples\sawFlanger.wav"
+
   let noiseFlanger() = 
     [ whiteNoise 10000.0 >> flanger 44100.0 7.0 0.15 0.5 0.2 ] 
     |> playWave 44100.0 10.0 @"samples\noiseFlanger.wav"
+
   let sawChorusAdsrDelay() = 
     [ modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
         (adsr 0.05 1.0 0.05 0.3 0.1 0.05) >> delay 44100.0 2.0 200.0 1.0 0.9 0.5 ] 
     |> playWave 44100.0 10.0 @"samples\sawChorusAdsrDelay.wav"
+
   let typoSawChorusAdsrDelay() = 
     [ modulate (square 10000.0 440.0 >> chorus 44100.0 30.0 0.4 1.5) 
         (adsr 0.05 1.0 0.05 0.3 0.1 0.05) >> delay 4410.0 2.0 200.0 1.0 0.9 0.5 ] 
@@ -221,21 +197,28 @@ module Tests =
   let karplusStrong() = 
     [ pluck2LevelRandom 10000.0 44100.0 256.0 ] 
     |> playWave 44100.0 15.0 @"samples\karplusStrong.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 ]
     |> List.map (generate 44100.0 15.0)
     |> streamToWav 44100 2 @"samples\karplusStrong.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0 ] 
     |> playWave 44100.0 15.0 @"samples\karplusStrongVibrato.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> vibrato 44100.0 7.0 2.0 ]
     |> List.map (generate 44100.0 15.0)
     |> streamToWav 44100 2 @"samples\karplusStrongVibrato.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0 ] 
     |> playWave 44100.0 15.0 @"samples\karplusStrongChorus.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> chorus 44100.0 30.0 0.5 2.0 ]
     |> List.map (generate 44100.0 15.0)
     |> streamToWav 44100 2 @"samples\karplusStrongChorus.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 ] 
     |> playWave 44100.0 15.0 @"samples\karplusStrongFlanger.wav"
+
     [ pluck2LevelRandom 10000.0 44100.0 256.0 >> flanger 44100.0 7.0 0.5 0.5 0.2 ]
     |> List.map (generate 44100.0 15.0)
     |> streamToWav 44100 2 @"samples\karplusStrongFlanger.wav"
