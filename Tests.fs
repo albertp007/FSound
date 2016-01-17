@@ -166,7 +166,7 @@ module Tests =
     whiteNoise 10000.0
     >> lp 44100.0 220.0
     |> generate 44100.0 1.0
-    |> plotFreq 20000
+    |> plotSpectrum 20000
   
   let triangleVibrato() = 
     [ triangle 10000.0 440.0 >> vibrato 44100.0 7.0 2.0 ] 

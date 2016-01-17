@@ -169,7 +169,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   whiteNoise 10000.0
   >> lp 44100.0 220.0
   |> generate 44100.0 1.0
-  |> plotFreq 20000;;
+  |> plotSpectrum 20000;;
   ```
 
 #### Vibrato

@@ -25,6 +25,7 @@ module Filter =
   open FSound.Data
   open FSound.IO
   open FSound.Signal
+  open System.Numerics
   
   ///
   /// <summary>Filter with feedforward and feedback coefficients
@@ -658,3 +659,23 @@ module Filter =
   let schroeder fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD) = 
     let r = schroeder2 fs bufferSec (dA, dB, dC, dD) (gA, gB, gC, gD)
     fun s -> r (s, s)
+
+  /// <summary>
+  /// Transfer function of a filter in real frequency domain
+  /// 1.0 is pre-pended to the list of feedback coefficients
+  /// </summary>
+  /// <param name="fs">Sampling frequency</param>
+  /// <param name="ffcoeff">List of feed-forward coefficients</param>
+  /// <param name="fbcoeff">List of feed-back coefficients</param>
+  /// <returns>The transfer function taking frequency as a parameter</returns>
+  let transfer fs ffcoeff fbcoeff =
+    let w = 2.0 * System.Math.PI / fs
+    let term f i coeff = exp (Complex(0.0, -w * f * float i)) * coeff
+    let sum cs = List.fold (+) (Complex(0.0, 0.0)) cs
+    let toComplex f = Complex(f, 0.0)
+    let ff = List.map toComplex ffcoeff
+    let fb = List.map toComplex (1.0::fbcoeff)
+    fun f ->
+      let zeros = List.mapi (term f) ff
+      let poles = List.mapi (term f) fb
+      sum zeros / sum poles

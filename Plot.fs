@@ -25,6 +25,7 @@ module Plot =
   open XPlot.GoogleCharts.WpfExtensions
   open FSound.Utilities
   open FSound.Filter
+  open System.Numerics
 
   let Show (chart: GoogleChart) = chart.Show()  
   //
@@ -33,7 +34,7 @@ module Plot =
   // <param name="signal">Sequence of floats representing the samples</param>
   // <returns>unit</returns>
   //
-  let plotFreq toFreq samples = 
+  let plotSpectrum toFreq samples = 
     samples
     |> fft
     |> magnitudes
@@ -57,4 +58,48 @@ module Plot =
     |> Chart.Line
     |> Show
 
+  /// <summary>
+  /// Plot the frequency response of a filter given feedback and feedforward
+  /// coefficients and a function that transforms the complex result before
+  /// plotting
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feedforward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// <param name="func">Function which takes a complex number and returns
+  /// a float</param>
+  /// <param name="toFreq">Frequcncy to plot up to</param>
+  let plotFreq fs ffcoeff fbcoeff func toFreq =
+    let H = transfer fs ffcoeff fbcoeff
+    let toFreq' = (float (int toFreq))
+
+    Seq.map (H >> func) {0.0..toFreq}
+    |> Seq.zip {0.0..toFreq}
+    |> Chart.Line
+    |> Show
+
+  /// <summary>
+  /// Plot the magnitude response of a filter given its feedforward and
+  /// feedback coefficients.  Note that 1.0 is appended to the list of
+  /// feedback coefficients
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feedforward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// <param name="toFreq">Frequcncy to plot up to</param>
+  let plotMagnitude fs ffcoeff fbcoeff toFreq =
+    plotFreq fs ffcoeff fbcoeff (Complex.Abs) toFreq
+
+  /// <summary>
+  /// Plot the phase response of a filter given its feedforward and
+  /// feedback coefficients.  Note that 1.0 is appended to the list of
+  /// feedback coefficients
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feedforward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// <param name="toFreq">Frequcncy to plot up to</param>
+  let plotPhase fs ffcoeff fbcoeff toFreq =
+    let phase (c:Complex) = c.Phase
+    plotFreq fs ffcoeff fbcoeff phase toFreq
 
