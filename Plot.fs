@@ -23,83 +23,213 @@ namespace FSound
 module Plot = 
   open XPlot.GoogleCharts
   open XPlot.GoogleCharts.WpfExtensions
+  open XPlot.Plotly
   open FSound.Utilities
   open FSound.Filter
   open System.Numerics
-
-  let Show (chart: GoogleChart) = chart.Show()  
-  //
-  // <summary>Run FFT on signal and plot frequency content using FSharp.Charting
-  // </summary>
-  // <param name="signal">Sequence of floats representing the samples</param>
-  // <returns>unit</returns>
-  //
-  let plotSpectrum toFreq samples = 
-    samples
-    |> fft
-    |> magnitudes
-    |> Seq.take (toFreq + 1)
-    |> Seq.zip {0..toFreq}
-    |> Chart.Line
-    |> Show
   
-  ///
-  /// <summary>Generate impulse response of a given length and pass through
-  /// the filter.  Plot the response using FSharp.Charting</summary>
-  /// <param name="n">the length of the impulse (inclusive of the initial 1)
-  /// </param>
-  /// <param name="filter">filter function</param>
-  /// <returns>unit</returns>
-  ///
-  let plotImpulse n filter = 
-    let y = impulseResponse n filter
-    y
-    |> Seq.zip {0..(Seq.length(y)-1)}
-    |> Chart.Line
-    |> Show
-
+  let Show(chart : GoogleChart) = chart.Show()
+  
   /// <summary>
-  /// Plot the frequency response of a filter given feedback and feedforward
-  /// coefficients and a function that transforms the complex result before
-  /// plotting
+  /// Calculate the data points for the spectrum of the samples up to the
+  /// specified frequency
+  /// </summary>
+  /// <param name="toFreq">Spectrum data up to toFreq in Hz</param>
+  /// <param name="samples">Sequence of samples</param>
+  /// <returns>A pair of sequences representing the x and y data points
+  /// </returns>
+  let calcSpectrum toFreq samples = 
+    let toFreq' = int toFreq
+    ({ 0.0..(float toFreq' + 1.0) }, 
+     samples
+     |> fft
+     |> magnitudes
+     |> Seq.take (toFreq' + 1))
+  
+  /// <summary>
+  /// Calculate the data points for the frequency response of a filter given
+  /// its feed-forward and feedback coefficients
   /// </summary>
   /// <param name="fs">Sampling frequency in Hz</param>
-  /// <param name="ffcoeff">Feedforward coefficients</param>
+  /// <param name="ffcoeff">Feed-forward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
-  /// <param name="func">Function which takes a complex number and returns
-  /// a float</param>
-  /// <param name="toFreq">Frequcncy to plot up to</param>
-  let plotFreq fs ffcoeff fbcoeff func toFreq =
+  /// <param name="func">A conversion function from complex to float, the
+  /// result of which will be the y axis data points</param>
+  /// <param name="toFreq">Calculate up to toFreq</param>
+  /// <returns>A pair of sequences representing the x and y data points
+  /// </returns>
+  let calcFreqRes fs ffcoeff fbcoeff func toFreq = 
     let H = transfer fs ffcoeff fbcoeff
     let toFreq' = (float (int toFreq))
-
-    Seq.map (H >> func) {0.0..toFreq}
-    |> Seq.zip {0.0..toFreq}
+    { 0.0..toFreq' }, Seq.map (H >> func) { 0.0..toFreq' }
+  
+  /// <summary>
+  /// Calculate the data points for the magnitude response of a filter given
+  /// its feed-forward and feedback coefficients
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feed-forward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// result of which will be the y axis data points</param>
+  /// <param name="toFreq">Calculate up to toFreq</param>
+  /// <returns>A pair of sequences representing the x and y data points
+  /// </returns>
+  let calcMagnitude fs ffcoeff fbcoeff toFreq = 
+    calcFreqRes fs ffcoeff fbcoeff (Complex.Abs
+                                    >> log10
+                                    >> ((*) 20.0)) toFreq
+  
+  /// <summary>
+  /// Calculate the data points for the phase response of a filter given
+  /// its feed-forward and feedback coefficients
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feed-forward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// result of which will be the y axis data points</param>
+  /// <param name="toFreq">Calculate up to toFreq</param>
+  /// <returns>A pair of sequences representing the x and y data points
+  /// </returns>
+  let calcPhase fs ffcoeff fbcoeff toFreq = 
+    calcFreqRes fs ffcoeff fbcoeff 
+      (fun c -> 180.0 * (atan2 c.Imaginary c.Real) / System.Math.PI) toFreq
+  
+  /// <summary>
+  /// Calculate the data points for the impulse response of a filter
+  /// </summary>
+  /// <param name="n"></param>
+  /// <param name="filter"></param>
+  /// <returns>A pair of sequences representing the x and y data points
+  /// </returns>
+  let calcImpulse n filter = { 0..(n - 1) }, impulseResponse n filter
+  
+  type PlotContainer = 
+    | Window
+    | Browser
+  
+  /// <summary>
+  /// Make a 2D line plot and show it in a window using Google Chart
+  /// </summary>
+  /// <param name="title">Title of the plot</param>
+  /// <param name="titleX">Title of the x axis</param>
+  /// <param name="titleY">Title of the y axis</param>
+  /// <param name="x">Sequence of data points for the x-axis</param>
+  /// <param name="y">Sequence of data points for the y-axis</param>
+  let plot2dwpf title titleX titleY (x, y) = 
+    let xaxis = Axis()
+    let yaxis = Axis()
+    xaxis.title <- titleX
+    yaxis.title <- titleY
+    let options = 
+      Options
+        (curveType = "function", title = title, hAxis = xaxis, vAxis = yaxis)
+    Seq.zip x y
     |> Chart.Line
-    |> Show
+    |> Chart.WithOptions options
+    |> Chart.Show
+    |> ignore
 
+  /// <summary>
+  /// Make a 2D line plot and show it in the browser using PlotLy
+  /// </summary>
+  /// <param name="title">Title of the plot</param>
+  /// <param name="titleX">Title of the x axis</param>
+  /// <param name="titleY">Title of the y axis</param>
+  /// <param name="x">Sequence of data points for the x-axis</param>
+  /// <param name="y">Sequence of data points for the y-axis</param>
+  let plotly2d title titleX titleY (x, y) = 
+    let layout = Layout()
+    layout.title <- title
+    let yaxis = Yaxis()
+    yaxis.title <- titleY
+    layout.yaxis <- yaxis
+    [ Scatter(x = x, y = y, mode = "lines") ]
+    |> fun data -> Plotly.Plot(data, layout)
+    |> Plotly.Show
+  
+  /// <summary>
+  /// Convenient function to make a 2D plot and show either in a window or in a
+  /// browser depending on the container type being passed in
+  /// </summary>
+  /// <param name="container">Either window or browser</param>
+  /// <param name="title">Title of the plot</param>
+  /// <param name="titleX">Title of the x axis</param>
+  /// <param name="titleY">Title of the y axis</param>
+  /// <param name="data">Pair of sequences</param>
+  let plot2d container title titleX titleY data = 
+    match container with
+    | Window -> plot2dwpf title titleX titleY data
+    | Browser -> plotly2d title titleX titleY data
+
+  /// <summary>
+  /// Plot the spectrum of a sequence of samples
+  /// </summary>
+  /// <param name="container">Either window or browser</param>
+  /// <param name="toFreq"></param>
+  /// <param name="samples"></param>
+  let plotSpectrum' container toFreq samples = 
+    calcSpectrum toFreq samples 
+    |> plot2d container "Frequency spectrum" "Frequency (Hz)" ""
+  
+  /// <summary>
+  /// Plot the spectrum of a sequence of samples and show the plot in a window
+  /// </summary>
+  /// <param name="toFreq"></param>
+  /// <param name="samples"></param>
+  let plotSpectrum toFreq samples = plotSpectrum' Window toFreq samples
+
+  /// <summary>
+  /// Plot the impulse response of a filter
+  /// </summary>
+  /// <param name="container">Either window or browser</param>
+  /// <param name="n"></param>
+  /// <param name="filter"></param>
+  let plotImpulse' container n filter = 
+    calcImpulse n filter |> plot2d container "Impulse response" "" ""
+  
+  /// <summary>
+  /// Plot the impulse response of a filter in a window
+  /// </summary>
+  let plotImpulse = plotImpulse' Window
+  
   /// <summary>
   /// Plot the magnitude response of a filter given its feedforward and
   /// feedback coefficients.  Note that 1.0 is appended to the list of
   /// feedback coefficients
   /// </summary>
+  /// <param name="container">Either window or browser</param>
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="ffcoeff">Feedforward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
   /// <param name="toFreq">Frequcncy to plot up to</param>
-  let plotMagnitude fs ffcoeff fbcoeff toFreq =
-    plotFreq fs ffcoeff fbcoeff (Complex.Abs) toFreq
-
+  let plotMagnitude' container fs ffcoeff fbcoeff toFreq = 
+    let title = 
+      sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
+    calcMagnitude fs ffcoeff fbcoeff toFreq 
+    |> plot2d container title "" "Magnitude (dB)"
+  
+  /// <summary>
+  /// Plot the magnitude response of a filter and show it in a window
+  /// </summary>
+  let plotMagnitude = plotMagnitude' Window
+  
   /// <summary>
   /// Plot the phase response of a filter given its feedforward and
   /// feedback coefficients.  Note that 1.0 is appended to the list of
   /// feedback coefficients
   /// </summary>
+  /// <param name="container">Either window or browser</param>
   /// <param name="fs">Sampling frequency in Hz</param>
   /// <param name="ffcoeff">Feedforward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
   /// <param name="toFreq">Frequcncy to plot up to</param>
-  let plotPhase fs ffcoeff fbcoeff toFreq =
-    let phase (c:Complex) = c.Phase
-    plotFreq fs ffcoeff fbcoeff phase toFreq
-
+  let plotPhase' container fs ffcoeff fbcoeff toFreq = 
+    let title = 
+      sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
+    calcPhase fs ffcoeff fbcoeff toFreq 
+    |> plot2d container title "" "Angle (degrees)"
+  
+  /// <summary>
+  /// Plot the phase response of a filter and show it in a window
+  /// </summary>
+  let plotPhase = plotPhase' Window

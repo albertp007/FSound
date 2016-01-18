@@ -26,7 +26,7 @@ module Tests =
   open FSound.Filter
   open FSound.Utilities
   open FSound.Play
-  open FSound.Plot
+  open FSound.Plotly
   open System
   
   Environment.SetEnvironmentVariable
@@ -338,6 +338,13 @@ module Tests =
   let chowningGong() =
     [bell 10000.0 100.0]
     |> playWave 44100.0 15.0 @"samples\chowningGong.wav"
+
+  let plotFreqResponse() =
+    let ff = [0.206572083826148; 0.413144167652296; 0.206572083826148]
+    let fb = [-0.369527377351241; 0.195815712655833]
+    plotMagnitude 10000.0 ff fb 5000
+    plotPhase 10000.0 ff fb 5000
+    
   
   let readmeExamples() = 
     generateSawAndStreamToWav()
@@ -352,6 +359,7 @@ module Tests =
     noiseHp()
     noiseLfo()
     noiseLpPlot() |> ignore
+    plotFreqResponse()
     triangleVibrato()
     sawFlanger()
     noiseFlanger()
