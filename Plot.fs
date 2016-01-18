@@ -38,7 +38,7 @@ module Plot =
   /// <param name="samples">Sequence of samples</param>
   /// <returns>A pair of sequences representing the x and y data points
   /// </returns>
-  let calcSpectrum toFreq samples = 
+  let calcSpectrum (toFreq: float) samples = 
     let toFreq' = int toFreq
     ({ 0.0..(float toFreq' + 1.0) }, 
      samples
@@ -58,10 +58,9 @@ module Plot =
   /// <param name="toFreq">Calculate up to toFreq</param>
   /// <returns>A pair of sequences representing the x and y data points
   /// </returns>
-  let calcFreqRes fs ffcoeff fbcoeff func toFreq = 
+  let calcFreqRes fs ffcoeff fbcoeff func (fromFreq: float) (toFreq: float) = 
     let H = transfer fs ffcoeff fbcoeff
-    let toFreq' = (float (int toFreq))
-    { 0.0..toFreq' }, Seq.map (H >> func) { 0.0..toFreq' }
+    { fromFreq..toFreq }, Seq.map (H >> func) { fromFreq..toFreq }
   
   /// <summary>
   /// Calculate the data points for the magnitude response of a filter given
@@ -93,7 +92,21 @@ module Plot =
   let calcPhase fs ffcoeff fbcoeff toFreq = 
     calcFreqRes fs ffcoeff fbcoeff 
       (fun c -> 180.0 * (atan2 c.Imaginary c.Real) / System.Math.PI) toFreq
-  
+      
+  /// <summary>
+  /// Calculate the data points for the group delay of a filter
+  /// </summary>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feed-forward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// <param name="toFreq">Calculate up to toFreq</param>
+  let calcGroupDelay fs ffcoeff fbcoeff toFreq =
+    let phase fromFreq toFreq = calcPhase fs ffcoeff fbcoeff fromFreq toFreq
+    let (x0, y0) = phase 0.0 toFreq
+    let windowed = Seq.windowed 2 y0
+    let y' = windowed |> Seq.map (fun a -> (a.[0] - a.[1]) * toFreq / 180.0)
+    (x0, 0.0::(Seq.toList y'))
+
   /// <summary>
   /// Calculate the data points for the impulse response of a filter
   /// </summary>
@@ -205,8 +218,8 @@ module Plot =
   let plotMagnitude' container fs ffcoeff fbcoeff toFreq = 
     let title = 
       sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
-    calcMagnitude fs ffcoeff fbcoeff toFreq 
-    |> plot2d container title "" "Magnitude (dB)"
+    calcMagnitude fs ffcoeff fbcoeff 0.0 toFreq 
+    |> plot2d container title "Frequency (Hz)" "Magnitude (dB)"
   
   /// <summary>
   /// Plot the magnitude response of a filter and show it in a window
@@ -226,10 +239,27 @@ module Plot =
   let plotPhase' container fs ffcoeff fbcoeff toFreq = 
     let title = 
       sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
-    calcPhase fs ffcoeff fbcoeff toFreq 
-    |> plot2d container title "" "Angle (degrees)"
+    calcPhase fs ffcoeff fbcoeff 0.0 toFreq 
+    |> plot2d container title "Frequency (Hz)" "Angle (degrees)"
   
   /// <summary>
   /// Plot the phase response of a filter and show it in a window
   /// </summary>
   let plotPhase = plotPhase' Window
+
+  /// <summary>
+  /// Plot the group delay of a filter
+  /// </summary>
+  /// <param name="container">Either window or browser</param>
+  /// <param name="fs">Sampling frequency in Hz</param>
+  /// <param name="ffcoeff">Feed-forward coefficients</param>
+  /// <param name="fbcoeff">Feedback coefficients</param>
+  /// <param name="toFreq">Frequency to plot up to</param>
+  let plotGroupDelay' container fs ffcoeff fbcoeff toFreq =
+    calcGroupDelay fs ffcoeff fbcoeff toFreq
+    |> plot2d container "Group Delay" "Frequency (Hz)" "Group Delay (samples)"
+
+  /// <summary>
+  /// Plot the group delay of a filter and show it in a window
+  /// </summary>
+  let plotGroupDelay = plotGroupDelay' Window

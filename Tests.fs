@@ -166,7 +166,7 @@ module Tests =
     whiteNoise 10000.0
     >> lp 44100.0 220.0
     |> generate 44100.0 1.0
-    |> plotSpectrum 20000
+    |> plotSpectrum 20000.0
   
   let triangleVibrato() = 
     [ triangle 10000.0 440.0 >> vibrato 44100.0 7.0 2.0 ] 
@@ -342,8 +342,13 @@ module Tests =
   let plotFreqResponse() =
     let ff = [0.206572083826148; 0.413144167652296; 0.206572083826148]
     let fb = [-0.369527377351241; 0.195815712655833]
-    plotMagnitude 10000.0 ff fb 5000
-    plotPhase 10000.0 ff fb 5000
+    plotMagnitude 10000.0 ff fb 5000.0
+    plotPhase 10000.0 ff fb 5000.0
+    // N.B. 4999.0 is because 5000.0 will generate a outlier data point
+    // 5000.0 being half of sampling will generate a phase of 0.0, minus
+    // the previous data point, will throw the scale of the plot out of
+    // proportion
+    plotGroupDelay 10000.0 ff fb 4999.0
     
   
   let readmeExamples() = 

@@ -48,3 +48,8 @@ module Plotly =
   /// Plot the phase response of a filter and show it in a browser
   /// </summary>
   let plotPhase = plotPhase' Browser
+
+  /// <summary>
+  /// Plot the group delay of a filter and show it in a browser
+  /// </summary>
+  let plotGroupDelay = plotGroupDelay' Browser
