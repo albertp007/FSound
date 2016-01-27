@@ -158,19 +158,18 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   
 #### Plotting frequency spectrum
 
-* Generate 1 sec of white noise samples, pass them through a low-pass filter and plot the frequency spectrum up to 20000Hz.
+* Plot the magnitude response of a biquad low-pass filter with a centre frequency of 1000Hz and Q equal to 1
   To run the following in F# interactive, you need to send the Newtonsoft.Json reference to F# interactive in addition to the FSound project reference
 
   ```
-  open FSound.Signal;;
   open FSound.Filter;;
-  open FSound.Plot;;
+  open FSound.Plotly;;
   
-  whiteNoise 10000.0
-  >> lp 44100.0 220.0
-  |> generate 44100.0 1.0
-  |> plotSpectrum 20000;;
+  bqlpCoeff 44100.0 1000.0 1.0
+  |> plotMagnitude 44100.0 5000.0;;
   ```
+
+  ![alt text](https://cdn.rawgit.com/albertp007/FSound/master/samples/frequencyResponse.png "Magnitude response Biquad low-pass filter 1000Hz")
 
 #### Vibrato
 

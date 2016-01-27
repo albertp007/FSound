@@ -215,7 +215,7 @@ module Plot =
   /// <param name="ffcoeff">Feedforward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
   /// <param name="toFreq">Frequcncy to plot up to</param>
-  let plotMagnitude' container fs ffcoeff fbcoeff toFreq = 
+  let plotMagnitude' container fs toFreq (ffcoeff, fbcoeff) = 
     let title = 
       sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
     calcMagnitude fs ffcoeff fbcoeff 0.0 toFreq 
@@ -236,7 +236,7 @@ module Plot =
   /// <param name="ffcoeff">Feedforward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
   /// <param name="toFreq">Frequcncy to plot up to</param>
-  let plotPhase' container fs ffcoeff fbcoeff toFreq = 
+  let plotPhase' container fs toFreq (ffcoeff, fbcoeff) = 
     let title = 
       sprintf "Frequency response\nff=%A\nfb=%A\nfs=%f" ffcoeff fbcoeff fs
     calcPhase fs ffcoeff fbcoeff 0.0 toFreq 
@@ -255,7 +255,7 @@ module Plot =
   /// <param name="ffcoeff">Feed-forward coefficients</param>
   /// <param name="fbcoeff">Feedback coefficients</param>
   /// <param name="toFreq">Frequency to plot up to</param>
-  let plotGroupDelay' container fs ffcoeff fbcoeff toFreq =
+  let plotGroupDelay' container fs toFreq (ffcoeff, fbcoeff) =
     calcGroupDelay fs ffcoeff fbcoeff toFreq
     |> plot2d container "Group Delay" "Frequency (Hz)" "Group Delay (samples)"
 

@@ -76,7 +76,50 @@ module Filter =
   let filter ffcoeff fbcoeff = 
     let zero _ = 0.0
     filter_with_init ffcoeff fbcoeff zero zero
-  
+
+  /// <summary>
+  /// Same as filter, but with the coefficients passed in as a pair
+  /// </summary>
+  /// <param name="ffcoeff">feed forward coefficients for the input samples
+  /// </param>
+  /// <param name="fbcoeff">feed back coefficients for the output samples
+  /// </param>
+  /// <returns>A function which takes in a float as a sample and returns y(n)
+  /// </returns>
+  let filterP (ffcoeff, fbcoeff) = filter ffcoeff fbcoeff
+
+  /// <summary>
+  /// Build a filter with a function which calculates the feedforward and
+  /// feedback coefficients given the sampling frequency, the center frequency
+  /// and the Q-factor
+  /// </summary>
+  /// <param name="coeffFunc">A function which takes in sampling frequency, the
+  /// centre frequency and the Q factor and returns a pair of list of floats
+  /// representing the list of feedforward coefficients and feedback
+  /// coefficients respectively</param>
+  /// <param name="fs">Sampling frequency in Hz, simply passed through to the
+  /// coefficient function</param>
+  /// <param name="fc">Centre frequency in Hz, simply passed through to the
+  /// coefficient function</param>
+  /// <param name="q">Q factor, simply passed through to the coefficient
+  /// function</param>
+  let buildFilter coeffFunc fs fc q = coeffFunc fs fc q |> filterP
+
+  /// <summary>
+  /// Build a filter with a function which calculates the feedforward and
+  /// feedback coefficients given the sampling frequency, the center frequency
+  /// </summary>
+  /// <param name="coeffFunc">A function which takes in sampling frequency, the
+  /// centre frequency and returns a pair of list of floats representing the 
+  /// list of feedforward coefficients and feedback coefficients respectively
+  /// </param>
+  /// <param name="fs">Sampling frequency in Hz, simply passed through to the
+  /// coefficient function</param>
+  /// <param name="fc">Centre frequency in Hz, simply passed through to the
+  /// coefficient function</param>
+  /// function</param>
+  let buildFilter2 coeffFunc fs fc = coeffFunc fs fc |> filterP  
+
   ///
   /// <summary>Generate impulse response for a filter</summary>
   /// <param name="n">Number of samples</param>
@@ -94,13 +137,15 @@ module Filter =
   /// <param name="q">Q factor</param>
   /// <returns>resonator function</returns>
   ///
-  let simpleResonator fs fc q = 
+  let simpleResonatorCoeff fs fc q = 
     let theta = 2.0 * System.Math.PI * fc / fs
     let w = fc / q
     let b2 = exp (-2.0 * System.Math.PI * w / fs)
     let b1 = -4.0 * b2 / (1.0 + b2) * (cos theta)
     let a0 = (1.0 - b2) * sqrt (1.0 - b1 * b1 / 4.0 / b2)
-    filter [ a0 ] [ b1; b2 ]
+    ([ a0 ],  [ b1; b2 ])
+
+  let simpleResonator = simpleResonatorCoeff |> buildFilter
   
   ///
   /// <summary>Smith-Angell resonator</summary>
@@ -109,14 +154,16 @@ module Filter =
   /// <param name="q">Q factor</param>
   /// <returns>resonator function</returns>
   ///
-  let smithAngell fs fc q = 
+  let smithAngellCoeff fs fc q = 
     let theta = 2.0 * System.Math.PI * fc / fs
     let w = fc / q
     let b2 = exp (-2.0 * System.Math.PI * w / fs)
     let b1 = -4.0 * b2 / (1.0 + b2) * (cos theta)
     let a0 = 1.0 - sqrt b2
     let a2 = -a0
-    filter [ a0; 0.0; a2 ] [ b1; b2 ]
+    [ a0; 0.0; a2 ], [ b1; b2 ]
+
+  let smithAngell = smithAngellCoeff |> buildFilter
   
   /// <summary>
   /// Biquad filter template for lp, hp, bp, notch and allpass filters.  Supply
@@ -130,7 +177,7 @@ module Filter =
   /// alpha and return a triplet of feedforward parameters</param>
   /// <returns>Vavrious bi-quad filter function according to the design eq
   /// </returns>
-  let biquad fs fc q designEq = 
+  let biquadCoeff fs fc q designEq = 
     let w = 2.0 * System.Math.PI * fc / fs
     let cosw = cos w
     let alpha = sin w / 2.0 / q
@@ -138,10 +185,9 @@ module Filter =
     let a0 = 1.0 + alpha
     let a1 = -2.0 * cosw
     let a2 = 1.0 - alpha
-    filter [ b0 / a0
-             b1 / a0
-             b2 / a0 ] [ a1 / a0
-                         a2 / a0 ]
+    [ b0 / a0; b1 / a0; b2 / a0 ], [ a1 / a0; a2 / a0 ]
+
+  let biquad fs fc q designEq = biquadCoeff fs fc q designEq |> filterP
   
   /// <summary>
   /// Bi-quad low pass filter
@@ -150,11 +196,13 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad low pass filter function</returns>
-  let bqlp fs fc q = 
+  let bqlpCoeff fs fc q = 
     (fun w alpha -> 
     let b1 = 1.0 - cos w
     (b1 / 2.0, b1, b1 / 2.0))
-    |> biquad fs fc q
+    |> biquadCoeff fs fc q
+
+  let bqlp = bqlpCoeff |> buildFilter
   
   /// <summary>
   /// Bi-quad high pass filter
@@ -163,11 +211,13 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad high pass filter function</returns>
-  let bqhp fs fc q = 
+  let bqhpCoeff fs fc q = 
     (fun w alpha -> 
     let b1 = -(1.0 + cos w)
     (-b1 / 2.0, b1, -b1 / 2.0))
-    |> biquad fs fc q
+    |> biquadCoeff fs fc q
+
+  let bqhp = bqhpCoeff |> buildFilter
   
   /// <summary>
   /// Bi-quad band-pass filter
@@ -176,12 +226,14 @@ module Filter =
   /// <param name="fc">Center frequency</param>
   /// <param name="q">Q factor</param>
   /// <returns>band-pass filter function</returns>
-  let bp fs fc q = 
+  let bpCoeff fs fc q = 
     (fun w alpha -> 
     let sinw = sin w
     (sinw / 2.0, 0.0, -sinw / 2.0))
-    |> biquad fs fc q
+    |> biquadCoeff fs fc q
   
+  let bp = bpCoeff |> buildFilter
+
   /// <summary>
   /// Bi-quad notch filter
   /// </summary>
@@ -189,12 +241,14 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad notch filter function</returns>
-  let notch fs fc q = 
+  let notchCoeff fs fc q = 
     (fun w alpha -> 
     let b1 = -2.0 * cos w
     (1.0, b1, 1.0))
-    |> biquad fs fc q
+    |> biquadCoeff fs fc q
   
+  let notch = notchCoeff |> buildFilter
+
   /// <summary>
   /// Bi-quad all pass filter
   /// </summary>
@@ -202,8 +256,11 @@ module Filter =
   /// <param name="fc">Center frequcny in Hz</param>
   /// <param name="q">Q factor</param>
   /// <returns>A bi-quad all pass filter function</returns>
-  let allpass fs fc q = 
-    (fun w alpha -> (1.0 - alpha, -2.0 * cos w, 1.0 + alpha)) |> biquad fs fc q
+  let allpassCoeff fs fc q = 
+    (fun w alpha -> (1.0 - alpha, -2.0 * cos w, 1.0 + alpha)) 
+    |> biquadCoeff fs fc q
+
+  let allpass = allpassCoeff |> buildFilter
   
   ///
   /// <summary>First order single pole low pass filter</summary>
@@ -211,11 +268,13 @@ module Filter =
   /// <param name="fc">cutoff frequencey</param>
   /// <returns>low pass filter function</returns>
   ///
-  let lp fs fc = 
+  let lpCoeff fs fc = 
     let theta = 2.0 * System.Math.PI * fc / fs
     let b1 = -exp (-theta)
     let a0 = 1.0 + b1
-    filter [ a0 ] [ b1 ]
+    [ a0 ], [ b1 ]
+
+  let lp = lpCoeff |> buildFilter2
   
   ///
   /// <summary>First order single pole high pass filter</summary>
@@ -223,7 +282,7 @@ module Filter =
   /// <param name="fc">cutoff frequencey</param>
   /// <returns>high pass filter function</returns>
   ///
-  let hp fs fc = 
+  let hpCoeff fs fc = 
     let theta = 2.0 * System.Math.PI * fc / fs
     let k = tan (theta / 2.0)
     let alpha = 1.0 + k
@@ -231,8 +290,10 @@ module Filter =
     let a1 = -(1.0 - k) / alpha
     let b0 = 1.0 / alpha
     let b1 = -1.0 / alpha
-    filter [ b0; b1 ] [ a1 ]
-  
+    [ b0; b1 ], [ a1 ]
+
+  let hp = hpCoeff |> buildFilter2
+
   ///
   /// <summary>Cubic interpolation between t=0 and t=1</summary>
   /// <param name="yMinus1">y(-1)</param>

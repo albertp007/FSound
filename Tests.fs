@@ -342,13 +342,13 @@ module Tests =
   let plotFreqResponse() =
     let ff = [0.206572083826148; 0.413144167652296; 0.206572083826148]
     let fb = [-0.369527377351241; 0.195815712655833]
-    plotMagnitude 10000.0 ff fb 5000.0
-    plotPhase 10000.0 ff fb 5000.0
+    plotMagnitude 10000.0 5000.0 (ff, fb)
+    plotPhase 10000.0 5000.0 (ff, fb)
     // N.B. 4999.0 is because 5000.0 will generate a outlier data point
     // 5000.0 being half of sampling will generate a phase of 0.0, minus
     // the previous data point, will throw the scale of the plot out of
     // proportion
-    plotGroupDelay 10000.0 ff fb 4999.0
+    plotGroupDelay 10000.0 4999.0 (ff, fb)
     
   
   let readmeExamples() = 
