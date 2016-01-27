@@ -156,7 +156,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 50.0;;
   ```
   
-#### Plotting frequency spectrum
+#### Plotting frequency response
 
 * Plot the magnitude response of a biquad low-pass filter with a centre frequency of 1000Hz and Q equal to 1
   To run the following in F# interactive, you need to send the Newtonsoft.Json reference to F# interactive in addition to the FSound project reference
