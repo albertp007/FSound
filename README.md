@@ -47,7 +47,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Utilities;;
   
-  triangle 10000.0 440.0 |> playWave 44100.0 2.0;;
+  [triangle 10000.0 440.0] |> playWave 44100.0 2.0;;
   ```
 
 #### Play different signals in left and right channel
@@ -252,7 +252,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   ```
   open FSound.Filter;;
   open FSound.Utilities;;
-  pluck2LevelRandom 10000.0 44100.0 256.0 |> playWave 44100.0 5.0;;
+  [pluck2LevelRandom 10000.0 44100.0 256.0] |> playWave 44100.0 5.0;;
   // For some interesting combinations with different variations of modulated delay line
   // Note:  When copying to F# interactive, copy and execute line by line, or they will
   // all sound at the same time
@@ -267,7 +267,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
 
   ```
   open FSound.Signal;;
-  open FSOund.Utilities;;
+  open FSound.Utilities;;
   let gen pitch = modulate (triangle 15000.0 pitch) (adsr 0.05 1.0 0.05 0.3 0.1 0.05)
   // natural tuning
   let (c, e, g, b) = (gen 256.0, gen 320.0, gen 384.0, gen 480.0)
@@ -355,7 +355,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   open FSound.Signal;;
   open FSound.Play;;
   open FSound.Utilities;;
-  [ triangle 10000.0 320.0 |> ring 440.0]
+  [ triangle 10000.0 320.0 |> ring 1.0 440.0]
   |> playWave 44100.0 1.0;;
   ```
 
