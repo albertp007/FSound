@@ -1,3 +1,23 @@
+//
+// FSound - F# Sound Processing Library
+// Copyright (c) 2017 by Albert Pang <albert.pang@me.com> 
+// All rights reserved.
+//
+// This file is a part of FSound
+//
+// FSound is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// FSound is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 namespace FSound
 
 open System;
@@ -328,4 +348,20 @@ module Tonal =
   module Tests =
 
     open NUnit.Framework
+    open FsUnit
+
+    [<TestCase()>]
+    let ``Add interval to note``() =
+      addIntervalToNote (Sh A) (Aug Third) |> should equal (XSh C)
+      addIntervalToNote (Sh A) (Maj Third) |> should equal (X C)
+      addIntervalToNote (Sh A) (Min Third) |> should equal (Sh C)
+      addIntervalToNote (Sh A) (Dim Third) |> should equal (N C)
+      addIntervalToNote (N A) (Aug Third) |> should equal (X C)
+      addIntervalToNote (N A) (Maj Third) |> should equal (Sh C)
+      addIntervalToNote (N A) (Min Third) |> should equal (N C)
+      addIntervalToNote (N A) (Dim Third) |> should equal (Fl C)
+      addIntervalToNote (Fl A) (Aug Third) |> should equal (Sh C)
+      addIntervalToNote (Fl A) (Maj Third) |> should equal (N C)
+      addIntervalToNote (Fl A) (Min Third) |> should equal (Fl C)
+      addIntervalToNote (Fl A) (Dim Third) |> should equal (Bb C)
     
