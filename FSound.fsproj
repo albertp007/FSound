@@ -61,11 +61,13 @@
     <Compile Include="Utilities.fs" />
     <Compile Include="Plot.fs" />
     <Compile Include="PlotLy.fs" />
+    <Compile Include="Tonal.fs" />
     <Compile Include="Tests.fs" />
     <Content Include="packages.config" />
     <Compile Include="UnitTests.fs" />
     <Content Include="app.config" />
     <None Include="SignalTest.fsx" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
