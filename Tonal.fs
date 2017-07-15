@@ -1,7 +1,6 @@
 namespace FSound
 
 open System;
-open 
 
 module Tonal =
 
@@ -67,11 +66,12 @@ module Tonal =
 
   /// <summary>
   /// This type represents a combination of interval quality and interval size
-  /// to form an interval.  There is however no way to forbid during compile
-  /// time the exceptions, yet accept others.  e.g. there is no minor 5th, but
-  /// there is diminished 5th.  Also we are treating the perfect intervals to be
-  /// the same as the major intervals with the same size.  e.g. Perfect 5th is
-  /// the same as Major 5th
+  /// to form an interval.  There is however no straight-forward way to forbid
+  /// these exceptions during compile time, but yet accept others.  e.g. there
+  /// is no minor 5th, but there is diminished 5th.  Also we are treating the
+  /// perfect intervals to be the same as the major intervals with the same
+  /// size.  e.g. Perfect 5th is the same as Major 5th; Minor 5th is deemed
+  /// equivalent to Dim 5th
   /// </summary>
   type Interval =
     | Perfect of IntervalSize
@@ -146,7 +146,7 @@ module Tonal =
   /// is A sharp or A flat will give us C something, also regardless of what
   /// kind of third it is.
   ///
-  /// A sharp + augmented 3rd -> C triple sharp (which is not supported)
+  /// A sharp + augmented 3rd -> C triple sharp
   /// A sharp + major 3rd -> C double sharp
   /// A sharp + minor 3rd -> C sharp
   /// A sharp + diminished 3rd -> C
@@ -283,6 +283,28 @@ module Tonal =
   /// With all of the fuss above, this function adds a certain interval (fully
   /// qualified with both the type and size) to a note (fully qualified with
   /// its note letter and the qualifiers) and return a note.
+  ///
+  /// 1. Convert the note to its semitone representation
+  /// 2. Calculate the number of semitone to add for the given interval
+  /// 3. Get the node letter from the note and add the interval to arrive at
+  ///    the result node letter (this is without the note qualifier, i.e.
+  ///    we don't know whether we need to add a sharp or flat etc yet)
+  /// 4. Convert the node letter above to its semitone number
+  /// 5. Calculates the exact semitone required when adding the fully qualified
+  ///    interval to the fully qualified note
+  /// 6. Work out the number of semitones required to adjust the node letter in
+  ///    3) in order to arrive at the semitone of the fully qualified note in 4)
+  /// 7. If the difference is 0, then it's a natural.  If it is +1, we need a 
+  ///    sharp; +2 - double sharp; +3 - triple sharp; -1 - flat; -2 - double
+  ///    flat; -3 - triple flat.  The 9/10/11 and their negative counterparts
+  ///    are for cases when the sequence of notes wrap around from B to C
+  ///
+  /// Hope this is clear.
+  ///
+  /// Note that the minor unison, fourth, fifth and octave intervals are treated
+  /// the same as diminished, since officially these minor intervals do not
+  /// exist
+  ///
   /// </summary>
   /// <param name="n"></param>
   /// <param name="i"></param>
