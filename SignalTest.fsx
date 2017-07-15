@@ -26,6 +26,7 @@ module SignalTest
 open FSound.Tests
 open System
 
+Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 Environment.SetEnvironmentVariable
   ("Path", 
     Environment.GetEnvironmentVariable("Path") + ";" + __SOURCE_DIRECTORY__ 
