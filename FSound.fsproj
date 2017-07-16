@@ -69,6 +69,7 @@
     <Content Include="app.config" />
     <None Include="SignalTest.fsx" />
     <None Include="README.md" />
+    <Compile Include="Tuning.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

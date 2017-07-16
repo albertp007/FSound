@@ -269,6 +269,14 @@ module Tonal =
     note |> getNoteLetter |> letterToSemitone |> ((+) d)
 
   /// <summary>
+  /// This function calculates the difference in semitones from note1 to note2
+  /// </summary>
+  /// <param name="note1"></param>
+  /// <param name="note2"></param>
+  let diffNotes note1 note2 =
+    (note2 |> calcSemitone) - (note1 |> calcSemitone)
+
+  /// <summary>
   /// This function calculates the number of semitones of an interval from a 
   /// major or perfect (which is treated as a major) interval of the same size
   /// e.g. any minor interval is 1 semitone flatter than a major interval of the
