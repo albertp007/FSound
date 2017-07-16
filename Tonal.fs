@@ -52,12 +52,6 @@ module Tonal =
     | N of Letter
 
   /// <summary>
-  /// This type represents the different modes of a scale.  Currently only
-  /// Major and Minor
-  /// </summary>
-  type Mode = Major | Minor
-
-  /// <summary>
   /// This type represents all the common interval sizes
   /// </summary>
   type IntervalSize =
@@ -344,6 +338,58 @@ module Tonal =
     | 2 | -10 -> X letter
     | 3 | -9 -> XSh letter
     | _ -> failwith "Interval not supported"
+
+  /// <summary>
+  /// This type represents the various type of chords formed on a particular
+  /// note.  The naming of the union cases is hopefully self-explanatory
+  /// </summary>
+  type Chord =
+    | Major of Note
+    | Minor of Note
+    | Maj7 of Note
+    | Min7 of Note
+    | Dom7 of Note
+    | Min7b5 of Note
+    | Neo6 of Note
+
+  /// <summary>
+  /// This function extracts the root note of a chord
+  /// </summary>
+  /// <param name="chord"></param>
+  let rootNote chord =
+    match chord with
+    | Major n -> n
+    | Minor n -> n
+    | Maj7 n -> n
+    | Min7 n -> n
+    | Dom7 n -> n
+    | Min7b5 n -> n
+    | Neo6 n -> n
+
+  /// <summary>
+  /// This function returns the definition of the different chord types by its
+  /// constituent intervals
+  /// </summary>
+  /// <param name="chord"></param>
+  let chordIntervals chord =
+    match chord with
+    | Major _ -> [Perfect Unison; Maj Third; Maj Fifth]
+    | Minor _ -> [Perfect Unison; Min Third; Maj Fifth]
+    | Maj7 _ -> [Perfect Unison; Maj Third; Maj Fifth; Maj Seventh]
+    | Min7 _ -> [Perfect Unison; Min Third; Maj Fifth; Min Seventh]
+    | Dom7 _ -> [Perfect Unison; Maj Third; Maj Fifth; Min Seventh]
+    | Min7b5 _ -> [Perfect Unison; Min Third; Dim Fifth; Min Seventh]
+    | Neo6 _ -> [Min Second; Perfect Fourth; Min Sixth]
+
+  /// <summary>
+  /// This function builds a chord by spelling out the list of notes in
+  /// ascending order in pitch according to the constituent intervals
+  /// </summary>
+  /// <param name="chord"></param>
+  let makeChord chord =
+    let note = chord |> rootNote
+    chord |> chordIntervals |> List.map (addIntervalToNote note)
+    
 
   module Tests =
 
