@@ -433,6 +433,7 @@ sampling rate 44100Hz, 1 channel, 16-bit sample (2 bytes) and which lasts for 2 
   |> playWave 44100.0 15.0;;
   ```
 
+#### Representing relationships in Western Tonal Music
 * Chords - Construction of chords from intervals
 
   ```
