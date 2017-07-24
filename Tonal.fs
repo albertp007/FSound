@@ -64,7 +64,9 @@ module Tonal =
     | Seventh
     | Octave
     | Ninth
+    | Tenth
     | Eleventh
+    | Twelfth
     | Thirteenth
 
   /// <summary>
@@ -189,12 +191,15 @@ module Tonal =
     | Seventh -> 6
     | Octave -> 7
     | Ninth -> 8
+    | Tenth -> 9
     | Eleventh -> 10
+    | Twelfth -> 11
     | Thirteenth -> 12
 
   /// <summary>
-  /// This function calculates the size of an interval size in terms of the
-  /// number of semitones from unison
+  /// This function calculates the size of a major/perfect interval in terms of
+  /// the number of semitones from unison.  E.g. a major second is 2 semitones
+  /// from unison and a perfect (major) fifth is 7 semitones from unison
   /// </summary>
   /// <param name="sz"></param>
   let intervalSizeToSemitone sz =
@@ -208,7 +213,9 @@ module Tonal =
     | Seventh -> 11
     | Octave -> 12
     | Ninth -> 14
+    | Tenth -> 16
     | Eleventh -> 17
+    | Twelfth -> 19
     | Thirteenth -> 21
 
   /// <summary>
@@ -297,7 +304,8 @@ module Tonal =
       | Min _ -> (-1)
       | Aug _ -> 1
       | Dim x -> match x with
-                 | Unison | Fourth | Fifth | Octave -> (-1)
+                 | Unison | Fourth | Fifth | Octave 
+                 | Eleventh | Twelfth -> (-1)
                  | _ -> -2
     i |> intervalToSemitone |> ((+) d)
 
