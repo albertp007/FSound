@@ -1,0 +1,18 @@
+source https://api.nuget.org/v3/index.json
+
+nuget FAKE
+nuget FSharp.Core
+nuget  FsUnit
+nuget  Google.DataTable.Net.Wrapper
+nuget  Http.fs
+nuget  MathNet.Numerics
+nuget  MathNet.Numerics.MKL.Win-x64
+nuget  NAudio
+nuget  NAudio.Lame
+nuget  Newtonsoft.Json
+nuget  NUnit
+nuget  NUnit3TestAdapter
+nuget  XPlot.GoogleCharts
+nuget  XPlot.GoogleCharts.WPF
+nuget  XPlot.Plotly
+nuget  XPlot.Plotly.WPF

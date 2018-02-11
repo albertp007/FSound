@@ -1,0 +1,15 @@
+FSharp.Core
+FsUnit
+Google.DataTable.Net.Wrapper
+Http.fs
+MathNet.Numerics
+MathNet.Numerics.MKL.Win-x64
+NAudio
+NAudio.Lame
+Newtonsoft.Json
+NUnit
+NUnit3TestAdapter
+XPlot.GoogleCharts
+XPlot.GoogleCharts.WPF
+XPlot.Plotly
+XPlot.Plotly.WPF
