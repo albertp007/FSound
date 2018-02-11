@@ -20,17 +20,13 @@
 //
 module SignalTest
 
-#I "bin/Debug"
+#I "src/bin/Debug/net461"
 #r "FSound.dll"
 
 open FSound.Tests
 open System
 
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
-Environment.SetEnvironmentVariable
-  ("Path", 
-    Environment.GetEnvironmentVariable("Path") + ";" + __SOURCE_DIRECTORY__ 
-    + @"\packages\NAudio.Lame.1.0.3\content")
 
 let main () =
   test()

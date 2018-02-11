@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Data.fs" />
+    <Compile Include="IO.fs" />
+    <Compile Include="Play.fs" />
+    <Compile Include="Signal.fs" />
+    <Compile Include="Filter.fs" />
+    <Compile Include="Utilities.fs" />
+    <Compile Include="Plot.fs" />
+    <Compile Include="Plotly.fs" />
+    <Compile Include="Tonal.fs" />
+    <Compile Include="Tests.fs" />
+    <Content Include="Google.DataTable.Net.Wrapper.XML">
+      <Paket>True</Paket>
+    </Content>
+    <Content Include="libmp3lame.32.dll">
+      <Paket>True</Paket>
+    </Content>
+    <Content Include="libmp3lame.64.dll">
+      <Paket>True</Paket>
+    </Content>
+    <Content Include="paket.references" />
+    <Compile Include="UnitTests.fs" />
+    <Content Include="app.config" />
+    <Compile Include="Tuning.fs" />
+  </ItemGroup>
+  <Import Project="..\.paket\Paket.Restore.targets" />
+</Project>
