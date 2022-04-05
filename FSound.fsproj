@@ -151,16 +151,8 @@
     <Reference Include="XPlot.GoogleCharts">
       <HintPath>packages\XPlot.GoogleCharts.3.0.1\lib\netstandard2.0\XPlot.GoogleCharts.dll</HintPath>
     </Reference>
-    <Reference Include="XPlot.GoogleCharts.WPF">
-      <HintPath>packages\XPlot.GoogleCharts.WPF.1.3.0\lib\net45\XPlot.GoogleCharts.WPF.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="XPlot.Plotly">
       <HintPath>packages\XPlot.Plotly.4.0.6\lib\netstandard2.0\XPlot.Plotly.dll</HintPath>
-    </Reference>
-    <Reference Include="XPlot.Plotly.WPF">
-      <HintPath>packages\XPlot.Plotly.WPF.1.3.0\lib\net45\XPlot.Plotly.WPF.dll</HintPath>
-      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
