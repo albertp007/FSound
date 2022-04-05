@@ -22,7 +22,6 @@ namespace FSound
 
 module Plot = 
   open XPlot.GoogleCharts
-  open XPlot.GoogleCharts.WpfExtensions
   open XPlot.Plotly
   open FSound.Utilities
   open FSound.Filter
@@ -134,12 +133,12 @@ module Plot =
     xaxis.title <- titleX
     yaxis.title <- titleY
     let options = 
-      Options
+      Configuration.Options
         (curveType = "function", title = title, hAxis = xaxis, vAxis = yaxis)
     Seq.zip x y
-    |> Chart.Line
-    |> Chart.WithOptions options
-    |> Chart.Show
+    |> XPlot.GoogleCharts.Chart.Line
+    |> XPlot.GoogleCharts.Chart.WithOptions options
+    |> XPlot.GoogleCharts.Chart.Show
     |> ignore
 
   /// <summary>
@@ -157,8 +156,8 @@ module Plot =
     yaxis.title <- titleY
     layout.yaxis <- yaxis
     [ Scatter(x = x, y = y, mode = "lines") ]
-    |> fun data -> Plotly.Plot(data, layout)
-    |> Plotly.Show
+    |> fun data -> XPlot.Plotly.Chart.Plot(data, layout)
+    |> XPlot.Plotly.Chart.Show
   
   /// <summary>
   /// Convenient function to make a 2D plot and show either in a window or in a
