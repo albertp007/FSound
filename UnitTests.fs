@@ -1,6 +1,6 @@
 ﻿//
 // FSound - F# Sound Processing Library
-// Copyright (c) 2016 by Albert Pang <albert.pang@me.com> 
+// Copyright (c) 2022 by Albert Pang <albert.pang@me.com> 
 // All rights reserved.
 //
 // This file is a part of FSound
@@ -29,6 +29,6 @@ module UnitTests =
   open FSound.Data
   open FSound.Utilities
 
-  [<Test>]
-  let ``two plus two should equal four``() =
+  [<TestCase(2, 3)>]
+  let ``two plus two should equal four``(x, y) =
     Assert.AreEqual(4, 2+2)
